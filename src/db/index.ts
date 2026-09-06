@@ -1,13 +1,14 @@
 import { type SQLiteDatabase, openDatabaseAsync } from 'expo-sqlite';
 
+import { createSchema } from './schema';
+
 const DATABASE_NAME = 'plotpilot.db';
 
 let dbPromise: Promise<SQLiteDatabase> | null = null;
 
-// PLO-2 owns the actual plot/activity schema; this just opens the
-// on-device database that will be the app's source of truth.
 async function migrate(db: SQLiteDatabase): Promise<void> {
   await db.execAsync('PRAGMA journal_mode = WAL;');
+  await createSchema(db);
 }
 
 export function getDatabase(): Promise<SQLiteDatabase> {
