@@ -26,7 +26,8 @@
     "plugins": [
       "expo-sqlite",
       "expo-localization",
-      "@maplibre/maplibre-react-native"
+      "@maplibre/maplibre-react-native",
+      "@react-native-community/datetimepicker"
     ]
   }
 }

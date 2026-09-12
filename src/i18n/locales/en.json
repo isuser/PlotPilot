@@ -17,6 +17,20 @@
     "soilType": "Soil type",
     "area": "Area",
     "perimeter": "Perimeter",
-    "notes": "Notes"
+    "notes": "Notes",
+    "activities": "Activities",
+    "addActivity": "Add activity",
+    "noActivities": "No activities logged yet"
+  },
+  "activityForm": {
+    "newTitle": "New activity",
+    "editTitle": "Edit activity",
+    "type": "Type",
+    "typePlaceholder": "e.g. Planting",
+    "date": "Date",
+    "notes": "Notes",
+    "notesPlaceholder": "Optional notes",
+    "save": "Save",
+    "done": "Done"
   }
 }
