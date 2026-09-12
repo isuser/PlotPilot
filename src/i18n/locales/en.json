@@ -4,5 +4,19 @@
   },
   "home": {
     "welcome": "Welcome to Plot Pilot"
+  },
+  "map": {
+    "offlineBanner": "No connection — showing your plots as a list",
+    "noPlots": "No plots yet"
+  },
+  "plotDetail": {
+    "title": "Plot",
+    "loading": "Loading...",
+    "notFound": "Plot not found",
+    "crop": "Crop",
+    "soilType": "Soil type",
+    "area": "Area",
+    "perimeter": "Perimeter",
+    "notes": "Notes"
   }
 }

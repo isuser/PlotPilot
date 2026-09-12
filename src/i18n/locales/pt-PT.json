@@ -4,5 +4,19 @@
   },
   "home": {
     "welcome": "Bem-vindo ao Plot Pilot"
+  },
+  "map": {
+    "offlineBanner": "Sem ligação — a mostrar as suas parcelas em lista",
+    "noPlots": "Ainda não há parcelas"
+  },
+  "plotDetail": {
+    "title": "Parcela",
+    "loading": "A carregar...",
+    "notFound": "Parcela não encontrada",
+    "crop": "Cultura",
+    "soilType": "Tipo de solo",
+    "area": "Área",
+    "perimeter": "Perímetro",
+    "notes": "Notas"
   }
 }
