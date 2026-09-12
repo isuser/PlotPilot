@@ -1,6 +1,14 @@
 import { getDatabase } from './index';
 import type { Activity, ActivityUpdate, NewActivity } from './types';
 
+export const DEFAULT_ACTIVITY_TYPES = [
+  'Planting',
+  'Fertilizing',
+  'Spraying',
+  'Irrigation',
+  'Harvesting',
+];
+
 interface ActivityRow {
   id: number;
   plot_id: number;
@@ -82,4 +90,12 @@ export async function updateActivity(id: number, input: ActivityUpdate): Promise
 export async function deleteActivity(id: number): Promise<void> {
   const db = await getDatabase();
   await db.runAsync('DELETE FROM activities WHERE id = ?', id);
+}
+
+export async function listDistinctActivityTypes(): Promise<string[]> {
+  const db = await getDatabase();
+  const rows = await db.getAllAsync<{ type: string }>(
+    'SELECT DISTINCT type FROM activities ORDER BY type COLLATE NOCASE ASC',
+  );
+  return rows.map((row) => row.type);
 }

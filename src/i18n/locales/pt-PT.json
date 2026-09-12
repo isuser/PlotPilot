@@ -17,6 +17,20 @@
     "soilType": "Tipo de solo",
     "area": "Área",
     "perimeter": "Perímetro",
-    "notes": "Notas"
+    "notes": "Notas",
+    "activities": "Atividades",
+    "addActivity": "Adicionar atividade",
+    "noActivities": "Ainda não há atividades registadas"
+  },
+  "activityForm": {
+    "newTitle": "Nova atividade",
+    "editTitle": "Editar atividade",
+    "type": "Tipo",
+    "typePlaceholder": "ex.: Plantação",
+    "date": "Data",
+    "notes": "Notas",
+    "notesPlaceholder": "Notas opcionais",
+    "save": "Guardar",
+    "done": "Concluído"
   }
 }

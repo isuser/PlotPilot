@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
+import ActivityFormScreen from '../screens/ActivityFormScreen';
 import MapScreen from '../screens/MapScreen';
 import PlotDetailScreen from '../screens/PlotDetailScreen';
 import type { RootStackParamList } from './types';
@@ -18,6 +19,7 @@ export default function RootNavigator() {
         component={PlotDetailScreen}
         options={{ title: t('plotDetail.title') }}
       />
+      <Stack.Screen name="ActivityForm" component={ActivityFormScreen} />
     </Stack.Navigator>
   );
 }
