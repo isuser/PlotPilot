@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -19,6 +19,8 @@ export default function HomeScreen({ navigation }: Props) {
   const [plots, setPlots] = useState<Plot[]>([]);
   const [recentActivities, setRecentActivities] = useState<ActivityWithPlot[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [cropFilter, setCropFilter] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -36,6 +38,26 @@ export default function HomeScreen({ navigation }: Props) {
     }, []),
   );
 
+  const distinctCrops = useMemo(() => {
+    const crops = new Set<string>();
+    for (const plot of plots) {
+      if (plot.crop) crops.add(plot.crop);
+    }
+    return Array.from(crops).sort((a, b) => a.localeCompare(b));
+  }, [plots]);
+
+  const isSearching = query.trim().length > 0 || cropFilter !== null;
+
+  const filteredPlots = useMemo(() => {
+    if (!isSearching) return [];
+    const normalizedQuery = query.trim().toLowerCase();
+    return plots.filter((plot) => {
+      const matchesQuery = normalizedQuery.length === 0 || plot.name.toLowerCase().includes(normalizedQuery);
+      const matchesCrop = cropFilter === null || plot.crop === cropFilter;
+      return matchesQuery && matchesCrop;
+    });
+  }, [plots, query, cropFilter, isSearching]);
+
   const startLoggingActivity = () => {
     if (plots.length === 1) {
       navigation.navigate('ActivityForm', { plotId: plots[0].id });
@@ -49,74 +71,139 @@ export default function HomeScreen({ navigation }: Props) {
     navigation.navigate('ActivityForm', { plotId });
   };
 
+  const listData: (Plot | ActivityWithPlot)[] = isSearching ? filteredPlots : recentActivities;
+
   return (
-    <FlatList
+    <FlatList<Plot | ActivityWithPlot>
       style={styles.container}
       contentContainerStyle={styles.content}
-      data={recentActivities}
+      data={listData}
       keyExtractor={(item) => String(item.id)}
+      keyboardShouldPersistTaps="handled"
       ListHeaderComponent={
         <>
           <Text style={styles.welcome}>{t('home.welcome')}</Text>
 
-          <Pressable style={styles.summaryCard} onPress={() => navigation.navigate('Map')}>
-            <Text style={styles.summaryValue}>{plots.length}</Text>
-            <Text style={styles.summaryLabel}>{t('home.plotCount', { count: plots.length })}</Text>
-          </Pressable>
+          <TextInput
+            style={styles.searchInput}
+            value={query}
+            onChangeText={setQuery}
+            placeholder={t('home.searchPlaceholder')}
+            autoCapitalize="none"
+          />
 
-          {plots.length === 0 ? (
-            <Pressable style={styles.primaryButton} onPress={() => navigation.navigate('PlotForm', undefined)}>
-              <Text style={styles.primaryButtonText}>{t('home.addFirstPlot')}</Text>
-            </Pressable>
-          ) : (
-            <Pressable style={styles.primaryButton} onPress={startLoggingActivity}>
-              <Text style={styles.primaryButtonText}>{t('home.logActivity')}</Text>
-            </Pressable>
-          )}
-
-          {pickerOpen ? (
-            <View style={styles.picker}>
-              <Text style={styles.pickerTitle}>{t('home.selectPlot')}</Text>
-              {plots.map((plot) => (
+          {distinctCrops.length > 0 ? (
+            <View style={styles.chipRow}>
+              <Pressable
+                style={[styles.chip, cropFilter === null && styles.chipSelected]}
+                onPress={() => setCropFilter(null)}
+              >
+                <Text style={[styles.chipText, cropFilter === null && styles.chipTextSelected]}>
+                  {t('home.allCrops')}
+                </Text>
+              </Pressable>
+              {distinctCrops.map((crop) => (
                 <Pressable
-                  key={plot.id}
-                  style={styles.pickerRow}
-                  onPress={() => pickPlotForActivity(plot.id)}
+                  key={crop}
+                  style={[styles.chip, cropFilter === crop && styles.chipSelected]}
+                  onPress={() => setCropFilter(crop === cropFilter ? null : crop)}
                 >
-                  <View style={[styles.colorDot, { backgroundColor: plot.color ?? DEFAULT_PLOT_COLOR }]} />
-                  <Text style={styles.pickerRowText}>{plot.name}</Text>
+                  <Text style={[styles.chipText, cropFilter === crop && styles.chipTextSelected]}>
+                    {crop}
+                  </Text>
                 </Pressable>
               ))}
-              <Pressable style={styles.pickerCancel} onPress={() => setPickerOpen(false)}>
-                <Text style={styles.pickerCancelText}>{t('plotDetail.cancel')}</Text>
-              </Pressable>
             </View>
           ) : null}
 
+          {!isSearching ? (
+            <>
+              <Pressable style={styles.summaryCard} onPress={() => navigation.navigate('Map')}>
+                <Text style={styles.summaryValue}>{plots.length}</Text>
+                <Text style={styles.summaryLabel}>{t('home.plotCount', { count: plots.length })}</Text>
+              </Pressable>
+
+              {plots.length === 0 ? (
+                <Pressable
+                  style={styles.primaryButton}
+                  onPress={() => navigation.navigate('PlotForm', undefined)}
+                >
+                  <Text style={styles.primaryButtonText}>{t('home.addFirstPlot')}</Text>
+                </Pressable>
+              ) : (
+                <Pressable style={styles.primaryButton} onPress={startLoggingActivity}>
+                  <Text style={styles.primaryButtonText}>{t('home.logActivity')}</Text>
+                </Pressable>
+              )}
+
+              {pickerOpen ? (
+                <View style={styles.picker}>
+                  <Text style={styles.pickerTitle}>{t('home.selectPlot')}</Text>
+                  {plots.map((plot) => (
+                    <Pressable
+                      key={plot.id}
+                      style={styles.pickerRow}
+                      onPress={() => pickPlotForActivity(plot.id)}
+                    >
+                      <View
+                        style={[styles.colorDot, { backgroundColor: plot.color ?? DEFAULT_PLOT_COLOR }]}
+                      />
+                      <Text style={styles.pickerRowText}>{plot.name}</Text>
+                    </Pressable>
+                  ))}
+                  <Pressable style={styles.pickerCancel} onPress={() => setPickerOpen(false)}>
+                    <Text style={styles.pickerCancelText}>{t('plotDetail.cancel')}</Text>
+                  </Pressable>
+                </View>
+              ) : null}
+            </>
+          ) : null}
+
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('home.recentActivity')}</Text>
-            <Pressable onPress={() => navigation.navigate('Timeline')}>
-              <Text style={styles.viewAllText}>{t('home.viewAll')}</Text>
-            </Pressable>
+            <Text style={styles.sectionTitle}>
+              {isSearching ? t('home.searchResults') : t('home.recentActivity')}
+            </Text>
+            {!isSearching ? (
+              <Pressable onPress={() => navigation.navigate('Timeline')}>
+                <Text style={styles.viewAllText}>{t('home.viewAll')}</Text>
+              </Pressable>
+            ) : null}
           </View>
         </>
       }
-      ListEmptyComponent={<Text style={styles.emptyText}>{t('timeline.noActivities')}</Text>}
-      renderItem={({ item }) => (
-        <Pressable
-          style={styles.activityRow}
-          onPress={() => navigation.navigate('PlotDetail', { plotId: item.plotId })}
-        >
-          <View style={[styles.colorDot, { backgroundColor: item.plotColor ?? DEFAULT_PLOT_COLOR }]} />
-          <View style={styles.activityRowContent}>
-            <View style={styles.activityRowHeader}>
-              <Text style={styles.plotName}>{item.plotName}</Text>
-              <Text style={styles.date}>{item.date}</Text>
+      ListEmptyComponent={
+        <Text style={styles.emptyText}>
+          {isSearching ? t('home.noResults') : t('timeline.noActivities')}
+        </Text>
+      }
+      renderItem={({ item }) =>
+        'plotId' in item ? (
+          <Pressable
+            style={styles.activityRow}
+            onPress={() => navigation.navigate('PlotDetail', { plotId: item.plotId })}
+          >
+            <View style={[styles.colorDot, { backgroundColor: item.plotColor ?? DEFAULT_PLOT_COLOR }]} />
+            <View style={styles.activityRowContent}>
+              <View style={styles.activityRowHeader}>
+                <Text style={styles.plotName}>{item.plotName}</Text>
+                <Text style={styles.date}>{item.date}</Text>
+              </View>
+              <Text style={styles.activityType}>{item.type}</Text>
             </View>
-            <Text style={styles.activityType}>{item.type}</Text>
-          </View>
-        </Pressable>
-      )}
+          </Pressable>
+        ) : (
+          <Pressable
+            style={styles.activityRow}
+            onPress={() => navigation.navigate('PlotDetail', { plotId: item.id })}
+          >
+            <View style={[styles.colorDot, { backgroundColor: item.color ?? DEFAULT_PLOT_COLOR }]} />
+            <View style={styles.activityRowContent}>
+              <Text style={styles.plotName}>{item.name}</Text>
+              {item.crop ? <Text style={styles.activityType}>{item.crop}</Text> : null}
+            </View>
+          </Pressable>
+        )
+      }
     />
   );
 }
@@ -125,6 +212,31 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   content: { padding: 16 },
   welcome: { fontSize: 22, fontWeight: '700', marginBottom: 16 },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+  },
+  chip: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  chipSelected: { backgroundColor: '#2E7D32', borderColor: '#2E7D32' },
+  chipText: { fontSize: 13, color: '#333', fontWeight: '600' },
+  chipTextSelected: { color: '#fff' },
   summaryCard: {
     backgroundColor: '#F3F4F6',
     borderRadius: 12,

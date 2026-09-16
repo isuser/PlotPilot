@@ -10,7 +10,11 @@
     "logActivity": "+ Registar atividade",
     "selectPlot": "Qual parcela?",
     "recentActivity": "Atividade recente",
-    "viewAll": "Ver tudo"
+    "viewAll": "Ver tudo",
+    "searchPlaceholder": "Pesquisar parcelas por nome",
+    "allCrops": "Todas",
+    "searchResults": "Resultados da pesquisa",
+    "noResults": "Nenhuma parcela corresponde à pesquisa"
   },
   "map": {
     "title": "Mapa",
