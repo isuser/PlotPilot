@@ -5,6 +5,7 @@ interface PlotRow {
   id: number;
   name: string;
   boundary: string | null;
+  color: string | null;
   area: number | null;
   perimeter: number | null;
   latitude: number | null;
@@ -20,6 +21,7 @@ function toPlot(row: PlotRow): Plot {
     id: row.id,
     name: row.name,
     boundary: row.boundary ? (JSON.parse(row.boundary) as BoundaryPoint[]) : null,
+    color: row.color,
     area: row.area,
     perimeter: row.perimeter,
     latitude: row.latitude,
@@ -34,10 +36,11 @@ function toPlot(row: PlotRow): Plot {
 export async function createPlot(input: NewPlot): Promise<Plot> {
   const db = await getDatabase();
   const result = await db.runAsync(
-    `INSERT INTO plots (name, boundary, area, perimeter, latitude, longitude, crop, soil_type, notes)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO plots (name, boundary, color, area, perimeter, latitude, longitude, crop, soil_type, notes)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     input.name,
     input.boundary ? JSON.stringify(input.boundary) : null,
+    input.color ?? null,
     input.area ?? null,
     input.perimeter ?? null,
     input.latitude ?? null,
@@ -70,6 +73,7 @@ export async function updatePlot(id: number, input: PlotUpdate): Promise<Plot | 
   const merged: NewPlot = {
     name: input.name ?? existing.name,
     boundary: input.boundary !== undefined ? input.boundary : existing.boundary,
+    color: input.color !== undefined ? input.color : existing.color,
     area: input.area !== undefined ? input.area : existing.area,
     perimeter: input.perimeter !== undefined ? input.perimeter : existing.perimeter,
     latitude: input.latitude !== undefined ? input.latitude : existing.latitude,
@@ -82,10 +86,11 @@ export async function updatePlot(id: number, input: PlotUpdate): Promise<Plot | 
   const db = await getDatabase();
   await db.runAsync(
     `UPDATE plots
-     SET name = ?, boundary = ?, area = ?, perimeter = ?, latitude = ?, longitude = ?, crop = ?, soil_type = ?, notes = ?
+     SET name = ?, boundary = ?, color = ?, area = ?, perimeter = ?, latitude = ?, longitude = ?, crop = ?, soil_type = ?, notes = ?
      WHERE id = ?`,
     merged.name,
     merged.boundary ? JSON.stringify(merged.boundary) : null,
+    merged.color ?? null,
     merged.area ?? null,
     merged.perimeter ?? null,
     merged.latitude ?? null,

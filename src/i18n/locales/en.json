@@ -7,7 +7,19 @@
   },
   "map": {
     "offlineBanner": "No connection — showing your plots as a list",
-    "noPlots": "No plots yet"
+    "noPlots": "No plots yet",
+    "newPlot": "+ New plot"
+  },
+  "plotForm": {
+    "title": "New plot",
+    "tapHint": "Tap the map to place boundary points (at least 3)",
+    "pointCount": "{{count}} points placed",
+    "undo": "Undo",
+    "clear": "Clear",
+    "name": "Name",
+    "namePlaceholder": "e.g. North field",
+    "color": "Color",
+    "save": "Save"
   },
   "plotDetail": {
     "title": "Plot",

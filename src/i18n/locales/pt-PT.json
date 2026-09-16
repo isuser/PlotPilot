@@ -7,7 +7,19 @@
   },
   "map": {
     "offlineBanner": "Sem ligação — a mostrar as suas parcelas em lista",
-    "noPlots": "Ainda não há parcelas"
+    "noPlots": "Ainda não há parcelas",
+    "newPlot": "+ Nova parcela"
+  },
+  "plotForm": {
+    "title": "Nova parcela",
+    "tapHint": "Toque no mapa para colocar pontos do limite (pelo menos 3)",
+    "pointCount": "{{count}} pontos colocados",
+    "undo": "Desfazer",
+    "clear": "Limpar",
+    "name": "Nome",
+    "namePlaceholder": "ex.: Campo norte",
+    "color": "Cor",
+    "save": "Guardar"
   },
   "plotDetail": {
     "title": "Parcela",
