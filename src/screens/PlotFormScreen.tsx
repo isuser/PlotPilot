@@ -86,12 +86,20 @@ export default function PlotFormScreen({ navigation, route }: Props) {
           <Camera initialViewState={{ center: initialCenter, zoom: 15 }} />
           {previewShape ? (
             <GeoJSONSource id="plot-form-preview" data={previewShape}>
-              {previewShape.type === 'Polygon' ? (
-                <>
-                  <Layer id="plot-form-fill" type="fill" paint={{ 'fill-color': color, 'fill-opacity': 0.35 }} />
-                  <Layer id="plot-form-outline" type="line" paint={{ 'line-color': color, 'line-width': 2 }} />
-                </>
-              ) : (
+              {previewShape.type === 'Polygon' ? [
+                <Layer
+                  key="fill"
+                  id="plot-form-fill"
+                  type="fill"
+                  paint={{ 'fill-color': color, 'fill-opacity': 0.35 }}
+                />,
+                <Layer
+                  key="outline"
+                  id="plot-form-outline"
+                  type="line"
+                  paint={{ 'line-color': color, 'line-width': 2 }}
+                />,
+              ] : (
                 <Layer id="plot-form-line" type="line" paint={{ 'line-color': color, 'line-width': 2 }} />
               )}
             </GeoJSONSource>
