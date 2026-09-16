@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   StyleSheet,
@@ -11,6 +13,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Camera, GeoJSONSource, Layer, Map, Marker } from '@maplibre/maplibre-react-native';
+import * as Location from 'expo-location';
 
 import { createPlot } from '../db/plots';
 import type { BoundaryPoint } from '../db/types';
@@ -25,6 +28,11 @@ type Props = NativeStackScreenProps<RootStackParamList, 'PlotForm'>;
 // center to start from (e.g. no existing plots to infer one from).
 const DEFAULT_CENTER: [number, number] = [-8.2245, 39.3999];
 
+// Point spacing while tracing a walk/drive: close enough for a plot boundary,
+// far enough to avoid flooding the boundary array with GPS jitter.
+const TRACE_DISTANCE_INTERVAL_METERS = 5;
+const TRACE_TIME_INTERVAL_MS = 2000;
+
 export default function PlotFormScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const initialCenter = route.params?.initialCenter ?? DEFAULT_CENTER;
@@ -33,10 +41,18 @@ export default function PlotFormScreen({ navigation, route }: Props) {
   const [color, setColor] = useState(DEFAULT_PLOT_COLOR);
   const [boundary, setBoundary] = useState<BoundaryPoint[]>([]);
   const [saving, setSaving] = useState(false);
+  const [tracing, setTracing] = useState(false);
+  const watchSubscriptionRef = useRef<Location.LocationSubscription | null>(null);
 
   useEffect(() => {
     navigation.setOptions({ title: t('plotForm.title') });
   }, [navigation, t]);
+
+  useEffect(() => {
+    return () => {
+      watchSubscriptionRef.current?.remove();
+    };
+  }, []);
 
   const previewShape = useMemo(() => {
     if (boundary.length >= 3) return boundaryToPolygon(boundary);
@@ -56,10 +72,54 @@ export default function PlotFormScreen({ navigation, route }: Props) {
     setBoundary([]);
   };
 
+  const stopTracing = () => {
+    watchSubscriptionRef.current?.remove();
+    watchSubscriptionRef.current = null;
+    setTracing(false);
+  };
+
+  const startTracing = async () => {
+    const { granted, canAskAgain } = await Location.requestForegroundPermissionsAsync();
+    if (!granted) {
+      Alert.alert(
+        t('plotForm.locationPermissionTitle'),
+        t('plotForm.locationPermissionMessage'),
+        canAskAgain
+          ? [{ text: t('plotDetail.cancel'), style: 'cancel' }]
+          : [
+              { text: t('plotDetail.cancel'), style: 'cancel' },
+              { text: t('plotForm.openSettings'), onPress: () => Linking.openSettings() },
+            ],
+      );
+      return;
+    }
+    const subscription = await Location.watchPositionAsync(
+      {
+        accuracy: Location.Accuracy.High,
+        distanceInterval: TRACE_DISTANCE_INTERVAL_METERS,
+        timeInterval: TRACE_TIME_INTERVAL_MS,
+      },
+      (location) => {
+        addPoint(location.coords.longitude, location.coords.latitude);
+      },
+    );
+    watchSubscriptionRef.current = subscription;
+    setTracing(true);
+  };
+
+  const toggleTracing = () => {
+    if (tracing) {
+      stopTracing();
+    } else {
+      startTracing();
+    }
+  };
+
   const canSave = name.trim().length > 0 && boundary.length >= 3 && !saving;
 
   const handleSave = async () => {
     if (!canSave) return;
+    stopTracing();
     setSaving(true);
     try {
       const plot = await createPlot({ name: name.trim(), boundary, color });
@@ -112,10 +172,23 @@ export default function PlotFormScreen({ navigation, route }: Props) {
         </Map>
         <View style={styles.hintBanner} pointerEvents="none">
           <Text style={styles.hintText}>
-            {boundary.length < 3 ? t('plotForm.tapHint') : t('plotForm.pointCount', { count: boundary.length })}
+            {tracing
+              ? t('plotForm.tracingActive', { count: boundary.length })
+              : boundary.length < 3
+                ? t('plotForm.tapHint')
+                : t('plotForm.pointCount', { count: boundary.length })}
           </Text>
         </View>
         <View style={styles.mapControls}>
+          <Pressable
+            style={[styles.controlButton, tracing && styles.traceButtonActive]}
+            onPress={toggleTracing}
+            disabled={saving}
+          >
+            <Text style={[styles.controlButtonText, tracing && styles.traceButtonActiveText]}>
+              {tracing ? t('plotForm.stopTracing') : t('plotForm.startTracing')}
+            </Text>
+          </Pressable>
           <Pressable
             style={[styles.controlButton, boundary.length === 0 && styles.controlButtonDisabled]}
             onPress={undoLastPoint}
@@ -215,6 +288,8 @@ const styles = StyleSheet.create({
   },
   controlButtonDisabled: { opacity: 0.4 },
   controlButtonText: { fontWeight: '600', color: '#333' },
+  traceButtonActive: { backgroundColor: '#C62828', borderColor: '#C62828' },
+  traceButtonActiveText: { color: '#fff' },
   form: { padding: 16 },
   label: { fontSize: 13, color: '#666', marginTop: 8, marginBottom: 6 },
   input: {
