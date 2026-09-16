@@ -1,4 +1,5 @@
 export type RootStackParamList = {
+  Home: undefined;
   Map: undefined;
   PlotForm: { initialCenter?: [number, number] } | undefined;
   PlotDetail: { plotId: number };

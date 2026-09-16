@@ -3,9 +3,17 @@
     "appName": "Plot Pilot"
   },
   "home": {
-    "welcome": "Welcome to Plot Pilot"
+    "welcome": "Welcome to Plot Pilot",
+    "plotCount_one": "{{count}} plot",
+    "plotCount_other": "{{count}} plots",
+    "addFirstPlot": "+ Add your first plot",
+    "logActivity": "+ Log activity",
+    "selectPlot": "Which plot?",
+    "recentActivity": "Recent activity",
+    "viewAll": "View all"
   },
   "map": {
+    "title": "Map",
     "offlineBanner": "No connection — showing your plots as a list",
     "noPlots": "No plots yet",
     "newPlot": "+ New plot",
