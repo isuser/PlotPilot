@@ -1,5 +1,5 @@
 import { getDatabase } from './index';
-import type { Activity, ActivityUpdate, NewActivity } from './types';
+import type { Activity, ActivityUpdate, ActivityWithPlot, NewActivity } from './types';
 
 export const DEFAULT_ACTIVITY_TYPES = [
   'Planting',
@@ -58,12 +58,15 @@ export async function listActivitiesForPlot(plotId: number): Promise<Activity[]>
   return rows.map(toActivity);
 }
 
-export async function listAllActivities(): Promise<Activity[]> {
+export async function listAllActivities(): Promise<ActivityWithPlot[]> {
   const db = await getDatabase();
-  const rows = await db.getAllAsync<ActivityRow>(
-    'SELECT * FROM activities ORDER BY date DESC, id DESC',
+  const rows = await db.getAllAsync<ActivityRow & { plot_name: string; plot_color: string | null }>(
+    `SELECT activities.*, plots.name AS plot_name, plots.color AS plot_color
+     FROM activities
+     JOIN plots ON plots.id = activities.plot_id
+     ORDER BY activities.date DESC, activities.id DESC`,
   );
-  return rows.map(toActivity);
+  return rows.map((row) => ({ ...toActivity(row), plotName: row.plot_name, plotColor: row.plot_color }));
 }
 
 export async function updateActivity(id: number, input: ActivityUpdate): Promise<Activity | null> {

@@ -8,7 +8,12 @@
   "map": {
     "offlineBanner": "No connection — showing your plots as a list",
     "noPlots": "No plots yet",
-    "newPlot": "+ New plot"
+    "newPlot": "+ New plot",
+    "timeline": "Timeline"
+  },
+  "timeline": {
+    "title": "Timeline",
+    "noActivities": "No activities logged yet"
   },
   "plotForm": {
     "title": "New plot",

@@ -40,6 +40,11 @@ export interface Activity {
   createdAt: string;
 }
 
+export interface ActivityWithPlot extends Activity {
+  plotName: string;
+  plotColor: string | null;
+}
+
 export interface NewActivity {
   plotId: number;
   type: string;

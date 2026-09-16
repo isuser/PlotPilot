@@ -8,7 +8,12 @@
   "map": {
     "offlineBanner": "Sem ligação — a mostrar as suas parcelas em lista",
     "noPlots": "Ainda não há parcelas",
-    "newPlot": "+ Nova parcela"
+    "newPlot": "+ Nova parcela",
+    "timeline": "Cronologia"
+  },
+  "timeline": {
+    "title": "Cronologia",
+    "noActivities": "Ainda não há atividades registadas"
   },
   "plotForm": {
     "title": "Nova parcela",
