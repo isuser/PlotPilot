@@ -10,7 +10,11 @@
     "logActivity": "+ Log activity",
     "selectPlot": "Which plot?",
     "recentActivity": "Recent activity",
-    "viewAll": "View all"
+    "viewAll": "View all",
+    "searchPlaceholder": "Search plots by name",
+    "allCrops": "All",
+    "searchResults": "Search results",
+    "noResults": "No plots match your search"
   },
   "map": {
     "title": "Map",
