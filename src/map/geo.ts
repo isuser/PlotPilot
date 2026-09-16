@@ -46,6 +46,15 @@ export function polygonAreaHectares(boundary: BoundaryPoint[]): number {
   return areaSquareMeters / 10000;
 }
 
+/** Simple vertex-average centroid, used as a plot's single-point location. */
+export function boundaryCentroid(boundary: BoundaryPoint[]): BoundaryPoint {
+  const sum = boundary.reduce(
+    (acc, point) => ({ latitude: acc.latitude + point.latitude, longitude: acc.longitude + point.longitude }),
+    { latitude: 0, longitude: 0 },
+  );
+  return { latitude: sum.latitude / boundary.length, longitude: sum.longitude / boundary.length };
+}
+
 export function boundaryToPolygon(boundary: BoundaryPoint[]): GeoJSON.Polygon {
   const ring = boundary.map((point): [number, number] => [point.longitude, point.latitude]);
   const first = ring[0];
