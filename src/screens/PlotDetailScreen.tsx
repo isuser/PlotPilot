@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import {
+  Alert,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -16,7 +17,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Camera, Map, Marker } from '@maplibre/maplibre-react-native';
 
 import { listActivitiesForPlot } from '../db/activities';
-import { getPlot, updatePlot } from '../db/plots';
+import { deletePlot, getPlot, updatePlot } from '../db/plots';
 import type { Activity, BoundaryPoint, Plot } from '../db/types';
 import type { RootStackParamList } from '../navigation/types';
 import { osmStyle } from '../map/osmStyle';
@@ -45,6 +46,7 @@ export default function PlotDetailScreen({ navigation, route }: Props) {
   const [notes, setNotes] = useState('');
   const [manualLocation, setManualLocation] = useState<BoundaryPoint | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -112,6 +114,29 @@ export default function PlotDetailScreen({ navigation, route }: Props) {
     } finally {
       setSaving(false);
     }
+  };
+
+  const confirmDelete = () => {
+    Alert.alert(
+      t('plotDetail.deleteConfirmTitle'),
+      t('plotDetail.deleteConfirmMessage', { name: plot.name }),
+      [
+        { text: t('plotDetail.cancel'), style: 'cancel' },
+        {
+          text: t('plotDetail.delete'),
+          style: 'destructive',
+          onPress: async () => {
+            setDeleting(true);
+            try {
+              await deletePlot(plot.id);
+              navigation.popToTop();
+            } finally {
+              setDeleting(false);
+            }
+          },
+        },
+      ],
+    );
   };
 
   if (editing) {
@@ -183,17 +208,29 @@ export default function PlotDetailScreen({ navigation, route }: Props) {
           )}
 
           <View style={styles.editActions}>
-            <Pressable style={styles.cancelButton} onPress={() => setEditing(false)} disabled={saving}>
+            <Pressable
+              style={styles.cancelButton}
+              onPress={() => setEditing(false)}
+              disabled={saving || deleting}
+            >
               <Text style={styles.cancelButtonText}>{t('plotDetail.cancel')}</Text>
             </Pressable>
             <Pressable
               style={[styles.saveButton, styles.saveButtonFlex, !canSave && styles.saveButtonDisabled]}
               onPress={handleSave}
-              disabled={!canSave}
+              disabled={!canSave || deleting}
             >
               <Text style={styles.saveButtonText}>{t('plotDetail.save')}</Text>
             </Pressable>
           </View>
+
+          <Pressable
+            style={styles.deleteButton}
+            onPress={confirmDelete}
+            disabled={saving || deleting}
+          >
+            <Text style={styles.deleteButtonText}>{t('plotDetail.deletePlot')}</Text>
+          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     );
@@ -357,4 +394,10 @@ const styles = StyleSheet.create({
   saveButtonFlex: { flex: 1 },
   saveButtonDisabled: { opacity: 0.5 },
   saveButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  deleteButton: {
+    alignItems: 'center',
+    paddingVertical: 14,
+    marginTop: 12,
+  },
+  deleteButtonText: { color: '#C62828', fontSize: 15, fontWeight: '600' },
 });
