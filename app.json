@@ -27,7 +27,13 @@
       "expo-sqlite",
       "expo-localization",
       "@maplibre/maplibre-react-native",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Plot Pilot uses your location to trace a plot boundary as you walk or drive its perimeter."
+        }
+      ]
     ]
   }
 }
