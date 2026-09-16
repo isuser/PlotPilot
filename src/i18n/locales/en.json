@@ -53,6 +53,10 @@
     "edit": "Edit",
     "cancel": "Cancel",
     "save": "Save",
+    "deletePlot": "Delete plot",
+    "delete": "Delete",
+    "deleteConfirmTitle": "Delete plot?",
+    "deleteConfirmMessage": "This will permanently delete \"{{name}}\" and all of its logged activities. This can't be undone.",
     "activities": "Activities",
     "addActivity": "Add activity",
     "noActivities": "No activities logged yet"

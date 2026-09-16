@@ -53,6 +53,10 @@
     "edit": "Editar",
     "cancel": "Cancelar",
     "save": "Guardar",
+    "deletePlot": "Eliminar parcela",
+    "delete": "Eliminar",
+    "deleteConfirmTitle": "Eliminar parcela?",
+    "deleteConfirmMessage": "Isto elimina permanentemente \"{{name}}\" e todas as suas atividades registadas. Esta ação não pode ser desfeita.",
     "activities": "Atividades",
     "addActivity": "Adicionar atividade",
     "noActivities": "Ainda não há atividades registadas"
