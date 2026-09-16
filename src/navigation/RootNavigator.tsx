@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import ActivityFormScreen from '../screens/ActivityFormScreen';
+import HomeScreen from '../screens/HomeScreen';
 import MapScreen from '../screens/MapScreen';
 import PlotDetailScreen from '../screens/PlotDetailScreen';
 import PlotFormScreen from '../screens/PlotFormScreen';
@@ -15,12 +16,13 @@ export default function RootNavigator() {
   const { t } = useTranslation();
 
   return (
-    <Stack.Navigator initialRouteName="Map">
+    <Stack.Navigator initialRouteName="Home">
+      <Stack.Screen name="Home" component={HomeScreen} options={{ title: t('common.appName') }} />
       <Stack.Screen
         name="Map"
         component={MapScreen}
         options={({ navigation }) => ({
-          title: t('common.appName'),
+          title: t('map.title'),
           headerRight: () => (
             <Pressable onPress={() => navigation.navigate('Timeline')} hitSlop={8}>
               <Text style={{ color: '#2E7D32', fontWeight: '600', fontSize: 15 }}>

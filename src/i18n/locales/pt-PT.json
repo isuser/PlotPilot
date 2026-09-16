@@ -3,9 +3,17 @@
     "appName": "Plot Pilot"
   },
   "home": {
-    "welcome": "Bem-vindo ao Plot Pilot"
+    "welcome": "Bem-vindo ao Plot Pilot",
+    "plotCount_one": "{{count}} parcela",
+    "plotCount_other": "{{count}} parcelas",
+    "addFirstPlot": "+ Adicionar a primeira parcela",
+    "logActivity": "+ Registar atividade",
+    "selectPlot": "Qual parcela?",
+    "recentActivity": "Atividade recente",
+    "viewAll": "Ver tudo"
   },
   "map": {
+    "title": "Mapa",
     "offlineBanner": "Sem ligação — a mostrar as suas parcelas em lista",
     "noPlots": "Ainda não há parcelas",
     "newPlot": "+ Nova parcela",
