@@ -18,8 +18,10 @@ import { listPlots } from '../db/plots';
 import type { Plot } from '../db/types';
 import type { RootStackParamList } from '../navigation/types';
 import { boundaryToPolygon } from '../map/geo';
+import { MapStyleToggle, type MapStyleMode } from '../map/MapStyleToggle';
 import { osmStyle } from '../map/osmStyle';
 import { DEFAULT_PLOT_COLOR } from '../map/plotColors';
+import { satelliteStyle } from '../map/satelliteStyle';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Map'>;
 
@@ -39,6 +41,7 @@ function plotCoordinate(plot: Plot): [number, number] | null {
 export default function MapScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const [plots, setPlots] = useState<Plot[]>([]);
+  const [mapStyleMode, setMapStyleMode] = useState<MapStyleMode>('street');
   const networkState = useNetworkState();
 
   useFocusEffect(
@@ -134,7 +137,7 @@ export default function MapScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <Map style={styles.map} mapStyle={osmStyle}>
+      <Map style={styles.map} mapStyle={mapStyleMode === 'street' ? osmStyle : satelliteStyle}>
         <Camera initialViewState={{ center: initialCenter, zoom: mappablePlots.length ? 13 : 6 }} />
         {plotsFeatureCollection.features.length > 0 ? (
           <GeoJSONSource id="plots" data={plotsFeatureCollection} onPress={handlePlotsPress}>
@@ -148,6 +151,10 @@ export default function MapScreen({ navigation }: Props) {
           </Marker>
         ))}
       </Map>
+      <MapStyleToggle
+        mode={mapStyleMode}
+        onToggle={() => setMapStyleMode((mode) => (mode === 'street' ? 'satellite' : 'street'))}
+      />
       {mappablePlots.length === 0 ? (
         <View style={styles.emptyOverlay} pointerEvents="none">
           <Text style={styles.emptyOverlayText}>{t('map.noPlots')}</Text>

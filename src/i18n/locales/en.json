@@ -21,7 +21,9 @@
     "offlineBanner": "No connection — showing your plots as a list",
     "noPlots": "No plots yet",
     "newPlot": "+ New plot",
-    "timeline": "Timeline"
+    "timeline": "Timeline",
+    "showSatellite": "Satellite",
+    "showStreet": "Map"
   },
   "timeline": {
     "title": "Timeline",
