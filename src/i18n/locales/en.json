@@ -14,7 +14,11 @@
     "searchPlaceholder": "Search plots by name",
     "allCrops": "All",
     "searchResults": "Search results",
-    "noResults": "No plots match your search"
+    "noResults": "No plots match your search",
+    "plots": "Plots",
+    "prev": "‹ Prev",
+    "next": "Next ›",
+    "pageIndicator": "{{page}} of {{total}}"
   },
   "map": {
     "title": "Map",
@@ -63,6 +67,7 @@
     "notes": "Notes",
     "notesPlaceholder": "Optional notes",
     "edit": "Edit",
+    "showOnMap": "Show on map",
     "cancel": "Cancel",
     "save": "Save",
     "deletePlot": "Delete plot",

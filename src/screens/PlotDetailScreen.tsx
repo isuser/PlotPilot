@@ -248,9 +248,19 @@ export default function PlotDetailScreen({ navigation, route }: Props) {
         <>
           <View style={styles.titleRow}>
             <Text style={styles.title}>{plot.name}</Text>
-            <Pressable style={styles.editButton} onPress={startEditing}>
-              <Text style={styles.editButtonText}>{t('plotDetail.edit')}</Text>
-            </Pressable>
+            <View style={styles.titleActions}>
+              {locationLabel ? (
+                <Pressable
+                  style={styles.mapButton}
+                  onPress={() => navigation.navigate('Map', { focusPlotId: plot.id })}
+                >
+                  <Text style={styles.mapButtonText}>{t('plotDetail.showOnMap')}</Text>
+                </Pressable>
+              ) : null}
+              <Pressable style={styles.editButton} onPress={startEditing}>
+                <Text style={styles.editButtonText}>{t('plotDetail.edit')}</Text>
+              </Pressable>
+            </View>
           </View>
           {plot.crop ? <DetailRow label={t('plotDetail.crop')} value={plot.crop} /> : null}
           {plot.soilType ? <DetailRow label={t('plotDetail.soilType')} value={plot.soilType} /> : null}
@@ -308,6 +318,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: { fontSize: 22, fontWeight: '700', flexShrink: 1 },
+  titleActions: { flexDirection: 'row', gap: 8 },
   editButton: {
     borderWidth: 1,
     borderColor: '#2E7D32',
@@ -316,6 +327,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   editButtonText: { color: '#2E7D32', fontWeight: '600' },
+  mapButton: {
+    borderWidth: 1,
+    borderColor: '#2E7D32',
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  mapButtonText: { color: '#2E7D32', fontWeight: '600' },
   row: { marginBottom: 12 },
   rowLabel: { fontSize: 13, color: '#666' },
   rowValue: { fontSize: 16, marginTop: 2 },

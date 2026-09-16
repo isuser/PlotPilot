@@ -14,7 +14,11 @@
     "searchPlaceholder": "Pesquisar parcelas por nome",
     "allCrops": "Todas",
     "searchResults": "Resultados da pesquisa",
-    "noResults": "Nenhuma parcela corresponde à pesquisa"
+    "noResults": "Nenhuma parcela corresponde à pesquisa",
+    "plots": "Parcelas",
+    "prev": "‹ Anterior",
+    "next": "Seguinte ›",
+    "pageIndicator": "{{page}} de {{total}}"
   },
   "map": {
     "title": "Mapa",
@@ -63,6 +67,7 @@
     "notes": "Notas",
     "notesPlaceholder": "Notas opcionais",
     "edit": "Editar",
+    "showOnMap": "Ver no mapa",
     "cancel": "Cancelar",
     "save": "Guardar",
     "deletePlot": "Eliminar parcela",
