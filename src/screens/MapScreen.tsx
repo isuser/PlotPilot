@@ -3,13 +3,15 @@ import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Camera, Map, Marker } from '@maplibre/maplibre-react-native';
+import { Camera, GeoJSONSource, Layer, Map, Marker } from '@maplibre/maplibre-react-native';
 import { useNetworkState } from 'expo-network';
 
 import { listPlots } from '../db/plots';
 import type { Plot } from '../db/types';
 import type { RootStackParamList } from '../navigation/types';
+import { boundaryToPolygon } from '../map/geo';
 import { osmStyle } from '../map/osmStyle';
+import { DEFAULT_PLOT_COLOR } from '../map/plotColors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Map'>;
 
@@ -56,6 +58,10 @@ export default function MapScreen({ navigation }: Props) {
   const isOffline = networkState.isConnected === false || networkState.isInternetReachable === false;
 
   const openPlot = (plotId: number) => navigation.navigate('PlotDetail', { plotId });
+  const openNewPlot = () => {
+    const center = mappablePlots[0]?.coordinate;
+    navigation.navigate('PlotForm', center ? { initialCenter: center } : undefined);
+  };
 
   if (isOffline) {
     return (
@@ -75,6 +81,9 @@ export default function MapScreen({ navigation }: Props) {
             </Pressable>
           )}
         />
+        <Pressable style={styles.fab} onPress={openNewPlot}>
+          <Text style={styles.fabText}>{t('map.newPlot')}</Text>
+        </Pressable>
       </View>
     );
   }
@@ -85,9 +94,25 @@ export default function MapScreen({ navigation }: Props) {
     <View style={styles.container}>
       <Map style={styles.map} mapStyle={osmStyle}>
         <Camera initialViewState={{ center: initialCenter, zoom: mappablePlots.length ? 13 : 6 }} />
+        {plots
+          .filter((plot) => (plot.boundary?.length ?? 0) >= 3)
+          .map((plot) => {
+            const color = plot.color ?? DEFAULT_PLOT_COLOR;
+            return (
+              <GeoJSONSource
+                key={plot.id}
+                id={`plot-${plot.id}`}
+                data={boundaryToPolygon(plot.boundary!)}
+                onPress={() => openPlot(plot.id)}
+              >
+                <Layer id={`plot-${plot.id}-fill`} type="fill" paint={{ 'fill-color': color, 'fill-opacity': 0.35 }} />
+                <Layer id={`plot-${plot.id}-outline`} type="line" paint={{ 'line-color': color, 'line-width': 2 }} />
+              </GeoJSONSource>
+            );
+          })}
         {mappablePlots.map(({ plot, coordinate }) => (
           <Marker key={plot.id} lngLat={coordinate} onPress={() => openPlot(plot.id)}>
-            <View style={styles.markerPin} />
+            <View style={[styles.markerPin, { backgroundColor: plot.color ?? DEFAULT_PLOT_COLOR }]} />
           </Marker>
         ))}
       </Map>
@@ -96,6 +121,9 @@ export default function MapScreen({ navigation }: Props) {
           <Text style={styles.emptyOverlayText}>{t('map.noPlots')}</Text>
         </View>
       ) : null}
+      <Pressable style={styles.fab} onPress={openNewPlot}>
+        <Text style={styles.fabText}>{t('map.newPlot')}</Text>
+      </Pressable>
     </View>
   );
 }
@@ -132,6 +160,21 @@ const styles = StyleSheet.create({
   listItemTitle: { fontSize: 16, fontWeight: '600' },
   listItemSubtitle: { fontSize: 13, color: '#666', marginTop: 2 },
   emptyText: { textAlign: 'center', color: '#666', marginTop: 24 },
+  fab: {
+    position: 'absolute',
+    right: 16,
+    bottom: 24,
+    backgroundColor: '#2E7D32',
+    borderRadius: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  fabText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   emptyOverlay: {
     position: 'absolute',
     top: 16,

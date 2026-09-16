@@ -7,6 +7,7 @@ export interface Plot {
   id: number;
   name: string;
   boundary: BoundaryPoint[] | null;
+  color: string | null;
   area: number | null;
   perimeter: number | null;
   latitude: number | null;
@@ -20,6 +21,7 @@ export interface Plot {
 export interface NewPlot {
   name: string;
   boundary?: BoundaryPoint[] | null;
+  color?: string | null;
   area?: number | null;
   perimeter?: number | null;
   latitude?: number | null;
