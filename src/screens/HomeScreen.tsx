@@ -13,6 +13,7 @@ import { DEFAULT_PLOT_COLOR } from '../map/plotColors';
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 const RECENT_ACTIVITY_LIMIT = 5;
+const PLOTS_PER_PAGE = 5;
 
 export default function HomeScreen({ navigation }: Props) {
   const { t } = useTranslation();
@@ -21,6 +22,7 @@ export default function HomeScreen({ navigation }: Props) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [cropFilter, setCropFilter] = useState<string | null>(null);
+  const [plotsPage, setPlotsPage] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
@@ -34,6 +36,7 @@ export default function HomeScreen({ navigation }: Props) {
       return () => {
         cancelled = true;
         setPickerOpen(false);
+        setPlotsPage(0);
       };
     }, []),
   );
@@ -57,6 +60,13 @@ export default function HomeScreen({ navigation }: Props) {
       return matchesQuery && matchesCrop;
     });
   }, [plots, query, cropFilter, isSearching]);
+
+  const plotsPageCount = Math.max(1, Math.ceil(plots.length / PLOTS_PER_PAGE));
+  const clampedPlotsPage = Math.min(plotsPage, plotsPageCount - 1);
+  const pagedPlots = plots.slice(
+    clampedPlotsPage * PLOTS_PER_PAGE,
+    clampedPlotsPage * PLOTS_PER_PAGE + PLOTS_PER_PAGE,
+  );
 
   const startLoggingActivity = () => {
     if (plots.length === 1) {
@@ -155,6 +165,61 @@ export default function HomeScreen({ navigation }: Props) {
                     <Text style={styles.pickerCancelText}>{t('plotDetail.cancel')}</Text>
                   </Pressable>
                 </View>
+              ) : null}
+
+              {plots.length > 0 ? (
+                <>
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>{t('home.plots')}</Text>
+                  </View>
+                  {pagedPlots.map((plot) => (
+                    <Pressable
+                      key={plot.id}
+                      style={styles.activityRow}
+                      onPress={() => navigation.navigate('PlotDetail', { plotId: plot.id })}
+                    >
+                      <View
+                        style={[styles.colorDot, { backgroundColor: plot.color ?? DEFAULT_PLOT_COLOR }]}
+                      />
+                      <View style={styles.activityRowContent}>
+                        <Text style={styles.plotName}>{plot.name}</Text>
+                        {plot.crop ? <Text style={styles.activityType}>{plot.crop}</Text> : null}
+                      </View>
+                    </Pressable>
+                  ))}
+                  {plotsPageCount > 1 ? (
+                    <View style={styles.paginationRow}>
+                      <Pressable
+                        style={styles.pageButton}
+                        onPress={() => setPlotsPage((page) => Math.max(0, page - 1))}
+                        disabled={clampedPlotsPage === 0}
+                      >
+                        <Text
+                          style={[styles.pageButtonText, clampedPlotsPage === 0 && styles.pageButtonTextDisabled]}
+                        >
+                          {t('home.prev')}
+                        </Text>
+                      </Pressable>
+                      <Text style={styles.pageIndicator}>
+                        {t('home.pageIndicator', { page: clampedPlotsPage + 1, total: plotsPageCount })}
+                      </Text>
+                      <Pressable
+                        style={styles.pageButton}
+                        onPress={() => setPlotsPage((page) => Math.min(plotsPageCount - 1, page + 1))}
+                        disabled={clampedPlotsPage >= plotsPageCount - 1}
+                      >
+                        <Text
+                          style={[
+                            styles.pageButtonText,
+                            clampedPlotsPage >= plotsPageCount - 1 && styles.pageButtonTextDisabled,
+                          ]}
+                        >
+                          {t('home.next')}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  ) : null}
+                </>
               ) : null}
             </>
           ) : null}
@@ -280,6 +345,16 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontSize: 18, fontWeight: '600' },
   viewAllText: { color: '#2E7D32', fontWeight: '600' },
+  paginationRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  pageButton: { paddingVertical: 8, paddingHorizontal: 4 },
+  pageButtonText: { color: '#2E7D32', fontWeight: '600' },
+  pageButtonTextDisabled: { opacity: 0.3 },
+  pageIndicator: { color: '#666', fontSize: 13 },
   emptyText: { textAlign: 'center', color: '#666', marginTop: 12 },
   colorDot: {
     width: 10,

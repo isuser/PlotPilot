@@ -14,14 +14,20 @@
     "searchPlaceholder": "Pesquisar parcelas por nome",
     "allCrops": "Todas",
     "searchResults": "Resultados da pesquisa",
-    "noResults": "Nenhuma parcela corresponde à pesquisa"
+    "noResults": "Nenhuma parcela corresponde à pesquisa",
+    "plots": "Parcelas",
+    "prev": "‹ Anterior",
+    "next": "Seguinte ›",
+    "pageIndicator": "{{page}} de {{total}}"
   },
   "map": {
     "title": "Mapa",
     "offlineBanner": "Sem ligação — a mostrar as suas parcelas em lista",
     "noPlots": "Ainda não há parcelas",
     "newPlot": "+ Nova parcela",
-    "timeline": "Cronologia"
+    "timeline": "Cronologia",
+    "showSatellite": "Satélite",
+    "showStreet": "Mapa"
   },
   "timeline": {
     "title": "Cronologia",
@@ -61,6 +67,7 @@
     "notes": "Notas",
     "notesPlaceholder": "Notas opcionais",
     "edit": "Editar",
+    "showOnMap": "Ver no mapa",
     "cancel": "Cancelar",
     "save": "Guardar",
     "deletePlot": "Eliminar parcela",

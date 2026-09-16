@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeSyntheticEvent } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -6,6 +6,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   Camera,
+  type CameraRef,
   GeoJSONSource,
   Layer,
   Map,
@@ -18,8 +19,10 @@ import { listPlots } from '../db/plots';
 import type { Plot } from '../db/types';
 import type { RootStackParamList } from '../navigation/types';
 import { boundaryToPolygon } from '../map/geo';
+import { MapStyleToggle, type MapStyleMode } from '../map/MapStyleToggle';
 import { osmStyle } from '../map/osmStyle';
 import { DEFAULT_PLOT_COLOR } from '../map/plotColors';
+import { satelliteStyle } from '../map/satelliteStyle';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Map'>;
 
@@ -36,10 +39,13 @@ function plotCoordinate(plot: Plot): [number, number] | null {
   return first ? [first.longitude, first.latitude] : null;
 }
 
-export default function MapScreen({ navigation }: Props) {
+export default function MapScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const [plots, setPlots] = useState<Plot[]>([]);
+  const [mapStyleMode, setMapStyleMode] = useState<MapStyleMode>('street');
   const networkState = useNetworkState();
+  const cameraRef = useRef<CameraRef>(null);
+  const focusPlotId = route.params?.focusPlotId;
 
   useFocusEffect(
     useCallback(() => {
@@ -60,6 +66,20 @@ export default function MapScreen({ navigation }: Props) {
         .filter((entry): entry is MappablePlot => entry.coordinate !== null),
     [plots],
   );
+
+  const focusTarget = useMemo(
+    () => (focusPlotId != null ? mappablePlots.find(({ plot }) => plot.id === focusPlotId) : undefined),
+    [focusPlotId, mappablePlots],
+  );
+
+  // Re-centers on a specific plot when opened via "Show on map" from its
+  // detail page. Uses the imperative camera API rather than relying solely
+  // on Camera's mount-time initialViewState, since navigating back to a Map
+  // screen already in the stack reuses the existing instance instead of
+  // remounting it.
+  useEffect(() => {
+    if (focusTarget) cameraRef.current?.flyTo({ center: focusTarget.coordinate, zoom: 16 });
+  }, [focusTarget]);
 
   // Plots with a boundary get a filled polygon on the map; that's already a
   // tappable, color-coded representation, so they skip the marker pin below
@@ -130,12 +150,18 @@ export default function MapScreen({ navigation }: Props) {
     );
   }
 
-  const initialCenter = mappablePlots[0]?.coordinate ?? DEFAULT_CENTER;
+  const initialCenter = focusTarget?.coordinate ?? mappablePlots[0]?.coordinate ?? DEFAULT_CENTER;
 
   return (
     <View style={styles.container}>
-      <Map style={styles.map} mapStyle={osmStyle}>
-        <Camera initialViewState={{ center: initialCenter, zoom: mappablePlots.length ? 13 : 6 }} />
+      <Map style={styles.map} mapStyle={mapStyleMode === 'street' ? osmStyle : satelliteStyle}>
+        <Camera
+          ref={cameraRef}
+          initialViewState={{
+            center: initialCenter,
+            zoom: focusTarget ? 16 : mappablePlots.length ? 13 : 6,
+          }}
+        />
         {plotsFeatureCollection.features.length > 0 ? (
           <GeoJSONSource id="plots" data={plotsFeatureCollection} onPress={handlePlotsPress}>
             <Layer id="plots-fill" type="fill" paint={{ 'fill-color': ['get', 'color'], 'fill-opacity': 0.35 }} />
@@ -148,6 +174,10 @@ export default function MapScreen({ navigation }: Props) {
           </Marker>
         ))}
       </Map>
+      <MapStyleToggle
+        mode={mapStyleMode}
+        onToggle={() => setMapStyleMode((mode) => (mode === 'street' ? 'satellite' : 'street'))}
+      />
       {mappablePlots.length === 0 ? (
         <View style={styles.emptyOverlay} pointerEvents="none">
           <Text style={styles.emptyOverlayText}>{t('map.noPlots')}</Text>

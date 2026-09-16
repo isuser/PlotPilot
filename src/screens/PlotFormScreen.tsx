@@ -18,8 +18,10 @@ import * as Location from 'expo-location';
 import { createPlot } from '../db/plots';
 import type { BoundaryPoint } from '../db/types';
 import { boundaryToLineString, boundaryToPolygon } from '../map/geo';
+import { MapStyleToggle, type MapStyleMode } from '../map/MapStyleToggle';
 import { osmStyle } from '../map/osmStyle';
 import { DEFAULT_PLOT_COLOR, PLOT_COLORS } from '../map/plotColors';
+import { satelliteStyle } from '../map/satelliteStyle';
 import type { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PlotForm'>;
@@ -42,6 +44,7 @@ export default function PlotFormScreen({ navigation, route }: Props) {
   const [boundary, setBoundary] = useState<BoundaryPoint[]>([]);
   const [saving, setSaving] = useState(false);
   const [tracing, setTracing] = useState(false);
+  const [mapStyleMode, setMapStyleMode] = useState<MapStyleMode>('street');
   const watchSubscriptionRef = useRef<Location.LocationSubscription | null>(null);
 
   useEffect(() => {
@@ -137,7 +140,7 @@ export default function PlotFormScreen({ navigation, route }: Props) {
       <View style={styles.mapContainer}>
         <Map
           style={styles.map}
-          mapStyle={osmStyle}
+          mapStyle={mapStyleMode === 'street' ? osmStyle : satelliteStyle}
           onPress={(event) => {
             const [longitude, latitude] = event.nativeEvent.lngLat;
             addPoint(longitude, latitude);
@@ -170,6 +173,10 @@ export default function PlotFormScreen({ navigation, route }: Props) {
             </Marker>
           ))}
         </Map>
+        <MapStyleToggle
+          mode={mapStyleMode}
+          onToggle={() => setMapStyleMode((mode) => (mode === 'street' ? 'satellite' : 'street'))}
+        />
         <View style={styles.hintBanner} pointerEvents="none">
           <Text style={styles.hintText}>
             {tracing
