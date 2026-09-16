@@ -1,9 +1,17 @@
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import type { NativeSyntheticEvent } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Camera, GeoJSONSource, Layer, Map, Marker } from '@maplibre/maplibre-react-native';
+import {
+  Camera,
+  GeoJSONSource,
+  Layer,
+  Map,
+  Marker,
+  type PressEventWithFeatures,
+} from '@maplibre/maplibre-react-native';
 import { useNetworkState } from 'expo-network';
 
 import { listPlots } from '../db/plots';
@@ -53,11 +61,45 @@ export default function MapScreen({ navigation }: Props) {
     [plots],
   );
 
+  // Plots with a boundary get a filled polygon on the map; that's already a
+  // tappable, color-coded representation, so they skip the marker pin below
+  // (one fewer composited view per plot — matters once there are many).
+  const unboundedMappablePlots = useMemo(
+    () => mappablePlots.filter(({ plot }) => (plot.boundary?.length ?? 0) < 3),
+    [mappablePlots],
+  );
+
+  // All boundaries are combined into a single GeoJSON source with two layers
+  // (fill + outline) using data-driven color, instead of one source/two
+  // layers per plot. Many small native sources scale poorly; one big one
+  // with per-feature styling is the standard MapLibre/Mapbox pattern for
+  // rendering lots of features. Memoized so it's only rebuilt when the plot
+  // list actually changes, not on every unrelated re-render.
+  const plotsFeatureCollection = useMemo<GeoJSON.FeatureCollection>(
+    () => ({
+      type: 'FeatureCollection',
+      features: plots
+        .filter((plot) => (plot.boundary?.length ?? 0) >= 3)
+        .map((plot) => ({
+          type: 'Feature',
+          properties: { plotId: plot.id, color: plot.color ?? DEFAULT_PLOT_COLOR },
+          geometry: boundaryToPolygon(plot.boundary!),
+        })),
+    }),
+    [plots],
+  );
+
   // Undefined readings (still resolving) are treated as online so the map is
   // the default view; only a confirmed disconnect triggers the list fallback.
   const isOffline = networkState.isConnected === false || networkState.isInternetReachable === false;
 
   const openPlot = (plotId: number) => navigation.navigate('PlotDetail', { plotId });
+
+  const handlePlotsPress = (event: NativeSyntheticEvent<PressEventWithFeatures>) => {
+    const plotId = event.nativeEvent.features[0]?.properties?.plotId;
+    if (typeof plotId === 'number') openPlot(plotId);
+  };
+
   const openNewPlot = () => {
     const center = mappablePlots[0]?.coordinate;
     navigation.navigate('PlotForm', center ? { initialCenter: center } : undefined);
@@ -94,23 +136,13 @@ export default function MapScreen({ navigation }: Props) {
     <View style={styles.container}>
       <Map style={styles.map} mapStyle={osmStyle}>
         <Camera initialViewState={{ center: initialCenter, zoom: mappablePlots.length ? 13 : 6 }} />
-        {plots
-          .filter((plot) => (plot.boundary?.length ?? 0) >= 3)
-          .map((plot) => {
-            const color = plot.color ?? DEFAULT_PLOT_COLOR;
-            return (
-              <GeoJSONSource
-                key={plot.id}
-                id={`plot-${plot.id}`}
-                data={boundaryToPolygon(plot.boundary!)}
-                onPress={() => openPlot(plot.id)}
-              >
-                <Layer id={`plot-${plot.id}-fill`} type="fill" paint={{ 'fill-color': color, 'fill-opacity': 0.35 }} />
-                <Layer id={`plot-${plot.id}-outline`} type="line" paint={{ 'line-color': color, 'line-width': 2 }} />
-              </GeoJSONSource>
-            );
-          })}
-        {mappablePlots.map(({ plot, coordinate }) => (
+        {plotsFeatureCollection.features.length > 0 ? (
+          <GeoJSONSource id="plots" data={plotsFeatureCollection} onPress={handlePlotsPress}>
+            <Layer id="plots-fill" type="fill" paint={{ 'fill-color': ['get', 'color'], 'fill-opacity': 0.35 }} />
+            <Layer id="plots-outline" type="line" paint={{ 'line-color': ['get', 'color'], 'line-width': 2 }} />
+          </GeoJSONSource>
+        ) : null}
+        {unboundedMappablePlots.map(({ plot, coordinate }) => (
           <Marker key={plot.id} lngLat={coordinate} onPress={() => openPlot(plot.id)}>
             <View style={[styles.markerPin, { backgroundColor: plot.color ?? DEFAULT_PLOT_COLOR }]} />
           </Marker>
