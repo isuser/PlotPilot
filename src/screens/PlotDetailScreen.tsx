@@ -60,9 +60,11 @@ export default function PlotDetailScreen({ navigation, route }: Props) {
           <Text style={styles.title}>{plot.name}</Text>
           {plot.crop ? <DetailRow label={t('plotDetail.crop')} value={plot.crop} /> : null}
           {plot.soilType ? <DetailRow label={t('plotDetail.soilType')} value={plot.soilType} /> : null}
-          {plot.area != null ? <DetailRow label={t('plotDetail.area')} value={String(plot.area)} /> : null}
+          {plot.area != null ? (
+            <DetailRow label={t('plotDetail.area')} value={`${plot.area.toFixed(2)} ha`} />
+          ) : null}
           {plot.perimeter != null ? (
-            <DetailRow label={t('plotDetail.perimeter')} value={String(plot.perimeter)} />
+            <DetailRow label={t('plotDetail.perimeter')} value={`${Math.round(plot.perimeter)} m`} />
           ) : null}
           {plot.notes ? <DetailRow label={t('plotDetail.notes')} value={plot.notes} /> : null}
 

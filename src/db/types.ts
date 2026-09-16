@@ -22,8 +22,6 @@ export interface NewPlot {
   name: string;
   boundary?: BoundaryPoint[] | null;
   color?: string | null;
-  area?: number | null;
-  perimeter?: number | null;
   latitude?: number | null;
   longitude?: number | null;
   crop?: string | null;

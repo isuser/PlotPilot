@@ -1,5 +1,14 @@
 import { getDatabase } from './index';
+import { polygonAreaHectares, polygonPerimeterMeters } from '../map/geo';
 import type { BoundaryPoint, NewPlot, Plot, PlotUpdate } from './types';
+
+function deriveMeasurements(boundary: BoundaryPoint[] | null | undefined): {
+  area: number | null;
+  perimeter: number | null;
+} {
+  if (!boundary || boundary.length < 3) return { area: null, perimeter: null };
+  return { area: polygonAreaHectares(boundary), perimeter: polygonPerimeterMeters(boundary) };
+}
 
 interface PlotRow {
   id: number;
@@ -34,6 +43,7 @@ function toPlot(row: PlotRow): Plot {
 }
 
 export async function createPlot(input: NewPlot): Promise<Plot> {
+  const { area, perimeter } = deriveMeasurements(input.boundary);
   const db = await getDatabase();
   const result = await db.runAsync(
     `INSERT INTO plots (name, boundary, color, area, perimeter, latitude, longitude, crop, soil_type, notes)
@@ -41,8 +51,8 @@ export async function createPlot(input: NewPlot): Promise<Plot> {
     input.name,
     input.boundary ? JSON.stringify(input.boundary) : null,
     input.color ?? null,
-    input.area ?? null,
-    input.perimeter ?? null,
+    area,
+    perimeter,
     input.latitude ?? null,
     input.longitude ?? null,
     input.crop ?? null,
@@ -74,14 +84,13 @@ export async function updatePlot(id: number, input: PlotUpdate): Promise<Plot | 
     name: input.name ?? existing.name,
     boundary: input.boundary !== undefined ? input.boundary : existing.boundary,
     color: input.color !== undefined ? input.color : existing.color,
-    area: input.area !== undefined ? input.area : existing.area,
-    perimeter: input.perimeter !== undefined ? input.perimeter : existing.perimeter,
     latitude: input.latitude !== undefined ? input.latitude : existing.latitude,
     longitude: input.longitude !== undefined ? input.longitude : existing.longitude,
     crop: input.crop !== undefined ? input.crop : existing.crop,
     soilType: input.soilType !== undefined ? input.soilType : existing.soilType,
     notes: input.notes !== undefined ? input.notes : existing.notes,
   };
+  const { area, perimeter } = deriveMeasurements(merged.boundary);
 
   const db = await getDatabase();
   await db.runAsync(
@@ -91,8 +100,8 @@ export async function updatePlot(id: number, input: PlotUpdate): Promise<Plot | 
     merged.name,
     merged.boundary ? JSON.stringify(merged.boundary) : null,
     merged.color ?? null,
-    merged.area ?? null,
-    merged.perimeter ?? null,
+    area,
+    perimeter,
     merged.latitude ?? null,
     merged.longitude ?? null,
     merged.crop ?? null,
