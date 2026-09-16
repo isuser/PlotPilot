@@ -12,6 +12,12 @@ A mobile app (iOS/Android) that helps people map, manage, and track agricultural
 - Fully offline — all data is stored on-device (SQLite) and is the source of truth, no accounts or cloud sync
 - English and European Portuguese (pt-PT) localization
 
+## Screenshots
+
+<img src="docs/screenshots/add-plot.png" alt="Drawing a plot boundary over satellite imagery" width="300" />
+
+Drawing a plot boundary by tapping points over the satellite basemap — area, color-coding, and a live preview before saving.
+
 ## Tech Stack
 
 - [React Native](https://reactnative.dev/) via [Expo](https://expo.dev/) (TypeScript)
