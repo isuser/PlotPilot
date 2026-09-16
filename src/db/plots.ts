@@ -1,5 +1,5 @@
 import { getDatabase } from './index';
-import { polygonAreaHectares, polygonPerimeterMeters } from '../map/geo';
+import { boundaryCentroid, polygonAreaHectares, polygonPerimeterMeters } from '../map/geo';
 import type { BoundaryPoint, NewPlot, Plot, PlotUpdate } from './types';
 
 function deriveMeasurements(boundary: BoundaryPoint[] | null | undefined): {
@@ -8,6 +8,21 @@ function deriveMeasurements(boundary: BoundaryPoint[] | null | undefined): {
 } {
   if (!boundary || boundary.length < 3) return { area: null, perimeter: null };
   return { area: polygonAreaHectares(boundary), perimeter: polygonPerimeterMeters(boundary) };
+}
+
+// A boundary's centroid always wins as the plot's location; without a
+// boundary the location falls back to whatever was explicitly set (e.g. a
+// manually placed pin).
+function deriveLocation(
+  boundary: BoundaryPoint[] | null | undefined,
+  explicitLatitude: number | null | undefined,
+  explicitLongitude: number | null | undefined,
+): { latitude: number | null; longitude: number | null } {
+  if (boundary && boundary.length >= 3) {
+    const centroid = boundaryCentroid(boundary);
+    return { latitude: centroid.latitude, longitude: centroid.longitude };
+  }
+  return { latitude: explicitLatitude ?? null, longitude: explicitLongitude ?? null };
 }
 
 interface PlotRow {
@@ -44,6 +59,7 @@ function toPlot(row: PlotRow): Plot {
 
 export async function createPlot(input: NewPlot): Promise<Plot> {
   const { area, perimeter } = deriveMeasurements(input.boundary);
+  const { latitude, longitude } = deriveLocation(input.boundary, input.latitude, input.longitude);
   const db = await getDatabase();
   const result = await db.runAsync(
     `INSERT INTO plots (name, boundary, color, area, perimeter, latitude, longitude, crop, soil_type, notes)
@@ -53,8 +69,8 @@ export async function createPlot(input: NewPlot): Promise<Plot> {
     input.color ?? null,
     area,
     perimeter,
-    input.latitude ?? null,
-    input.longitude ?? null,
+    latitude,
+    longitude,
     input.crop ?? null,
     input.soilType ?? null,
     input.notes ?? null,
@@ -91,6 +107,7 @@ export async function updatePlot(id: number, input: PlotUpdate): Promise<Plot | 
     notes: input.notes !== undefined ? input.notes : existing.notes,
   };
   const { area, perimeter } = deriveMeasurements(merged.boundary);
+  const { latitude, longitude } = deriveLocation(merged.boundary, merged.latitude, merged.longitude);
 
   const db = await getDatabase();
   await db.runAsync(
@@ -102,8 +119,8 @@ export async function updatePlot(id: number, input: PlotUpdate): Promise<Plot | 
     merged.color ?? null,
     area,
     perimeter,
-    merged.latitude ?? null,
-    merged.longitude ?? null,
+    latitude,
+    longitude,
     merged.crop ?? null,
     merged.soilType ?? null,
     merged.notes ?? null,
