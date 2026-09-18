@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
 import { useMemo, useState } from 'react';
-import { Alert, Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import { buildDataExport } from '../db/export';
+import { buildDataExport, type DataExport } from '../db/export';
+import { ImportParseError, importDataExport, parseDataExport } from '../db/import';
 import { getLanguagePreference, setLanguagePreference, supportedLanguages, type LanguagePreference } from '../i18n';
 import { useTheme, type ThemePreference } from '../theme/ThemeContext';
 import type { ThemeColors } from '../theme/colors';
@@ -23,9 +24,19 @@ function SettingsSection({ title, children, styles }: SettingsSectionProps) {
   );
 }
 
+const IMPORT_ERROR_KEYS: Record<ImportParseError['code'], string> = {
+  notJson: 'settings.importErrorNotJson',
+  badShape: 'settings.importErrorBadShape',
+  badPlots: 'settings.importErrorBadPlots',
+  badActivities: 'settings.importErrorBadActivities',
+};
+
 function DataSection({ styles }: { styles: ReturnType<typeof createStyles> }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const [exporting, setExporting] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [importing, setImporting] = useState(false);
 
   const handleExport = async () => {
     setExporting(true);
@@ -42,12 +53,74 @@ function DataSection({ styles }: { styles: ReturnType<typeof createStyles> }) {
     }
   };
 
+  const runImport = async (parsed: DataExport) => {
+    setImporting(true);
+    try {
+      const result = await importDataExport(parsed);
+      setImportText('');
+      Alert.alert(
+        t('settings.importSuccessTitle'),
+        t('settings.importSuccessMessage', {
+          plotsLabel: t('settings.importPlotsCount', { count: result.plotsImported }),
+          activitiesLabel: t('settings.importActivitiesCount', { count: result.activitiesImported }),
+        }),
+      );
+    } catch {
+      Alert.alert(t('settings.importErrorTitle'), t('settings.importErrorGeneric'));
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleImportPress = () => {
+    let parsed: DataExport;
+    try {
+      parsed = parseDataExport(importText);
+    } catch (error) {
+      const code = error instanceof ImportParseError ? error.code : 'badShape';
+      Alert.alert(t('settings.importErrorTitle'), t(IMPORT_ERROR_KEYS[code]));
+      return;
+    }
+
+    Alert.alert(
+      t('settings.importConfirmTitle'),
+      t('settings.importConfirmMessage', {
+        plotsLabel: t('settings.importPlotsCount', { count: parsed.plots.length }),
+        activitiesLabel: t('settings.importActivitiesCount', { count: parsed.activities.length }),
+      }),
+      [
+        { text: t('plotDetail.cancel'), style: 'cancel' },
+        { text: t('settings.importConfirmButton'), onPress: () => runImport(parsed) },
+      ],
+    );
+  };
+
+  const canImport = importText.trim().length > 0 && !importing;
+
   return (
-    <Pressable style={styles.actionRow} onPress={handleExport} disabled={exporting}>
-      <Text style={styles.actionRowText}>
-        {exporting ? t('settings.exporting') : t('settings.exportData')}
-      </Text>
-    </Pressable>
+    <View style={styles.dataActions}>
+      <Pressable style={styles.actionRow} onPress={handleExport} disabled={exporting}>
+        <Text style={styles.actionRowText}>
+          {exporting ? t('settings.exporting') : t('settings.exportData')}
+        </Text>
+      </Pressable>
+      <TextInput
+        style={styles.importInput}
+        value={importText}
+        onChangeText={setImportText}
+        placeholder={t('settings.importPlaceholder')}
+        placeholderTextColor={colors.textSecondary}
+        editable={!importing}
+        multiline
+        autoCapitalize="none"
+        autoCorrect={false}
+      />
+      <Pressable style={styles.actionRow} onPress={handleImportPress} disabled={!canImport}>
+        <Text style={[styles.actionRowText, !canImport && styles.actionRowTextDisabled]}>
+          {importing ? t('settings.importing') : t('settings.importData')}
+        </Text>
+      </Pressable>
+    </View>
   );
 }
 
@@ -154,8 +227,21 @@ function createStyles(colors: ThemeColors) {
       paddingVertical: 14,
       paddingHorizontal: 12,
     },
+    dataActions: { gap: 12 },
     actionRow: {},
     actionRowText: { fontSize: 15, color: colors.accentText, fontWeight: '600' },
+    actionRowTextDisabled: { opacity: 0.4 },
+    importInput: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      fontSize: 14,
+      minHeight: 80,
+      textAlignVertical: 'top',
+      color: colors.textPrimary,
+    },
     segmentedControl: {
       flexDirection: 'row',
       backgroundColor: colors.border,
