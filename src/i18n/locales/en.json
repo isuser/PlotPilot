@@ -87,12 +87,16 @@
       "dark": "Dark"
     },
     "language": "Language",
+    "languageNames": {
+      "system": "System",
+      "en": "English",
+      "pt-PT": "Português"
+    },
     "data": "Data",
     "exportData": "Export data",
     "exporting": "Exporting…",
     "exportErrorTitle": "Export failed",
-    "exportErrorMessage": "Something went wrong while exporting your data. Please try again.",
-    "comingSoon": "Coming soon"
+    "exportErrorMessage": "Something went wrong while exporting your data. Please try again."
   },
   "activityForm": {
     "newTitle": "New activity",
