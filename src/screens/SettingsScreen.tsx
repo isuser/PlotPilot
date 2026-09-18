@@ -4,6 +4,7 @@ import { Alert, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { buildDataExport } from '../db/export';
+import { getLanguagePreference, setLanguagePreference, supportedLanguages, type LanguagePreference } from '../i18n';
 import { useTheme, type ThemePreference } from '../theme/ThemeContext';
 import type { ThemeColors } from '../theme/colors';
 
@@ -20,10 +21,6 @@ function SettingsSection({ title, children, styles }: SettingsSectionProps) {
       <View style={styles.row}>{children}</View>
     </View>
   );
-}
-
-function PlaceholderRow({ label, styles }: { label: string; styles: ReturnType<typeof createStyles> }) {
-  return <Text style={styles.rowText}>{label}</Text>;
 }
 
 function DataSection({ styles }: { styles: ReturnType<typeof createStyles> }) {
@@ -54,6 +51,33 @@ function DataSection({ styles }: { styles: ReturnType<typeof createStyles> }) {
   );
 }
 
+interface SegmentedControlProps<T extends string> {
+  options: T[];
+  value: T;
+  onChange: (option: T) => void;
+  labelFor: (option: T) => string;
+  styles: ReturnType<typeof createStyles>;
+}
+
+function SegmentedControl<T extends string>({ options, value, onChange, labelFor, styles }: SegmentedControlProps<T>) {
+  return (
+    <View style={styles.segmentedControl}>
+      {options.map((option) => {
+        const selected = option === value;
+        return (
+          <Pressable
+            key={option}
+            onPress={() => onChange(option)}
+            style={[styles.segment, selected && styles.segmentSelected]}
+          >
+            <Text style={[styles.segmentText, selected && styles.segmentTextSelected]}>{labelFor(option)}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 const THEME_OPTIONS: ThemePreference[] = ['system', 'light', 'dark'];
 
 function AppearanceSection({ styles }: { styles: ReturnType<typeof createStyles> }) {
@@ -61,22 +85,35 @@ function AppearanceSection({ styles }: { styles: ReturnType<typeof createStyles>
   const { preference, setPreference } = useTheme();
 
   return (
-    <View style={styles.segmentedControl}>
-      {THEME_OPTIONS.map((option) => {
-        const selected = option === preference;
-        return (
-          <Pressable
-            key={option}
-            onPress={() => setPreference(option)}
-            style={[styles.segment, selected && styles.segmentSelected]}
-          >
-            <Text style={[styles.segmentText, selected && styles.segmentTextSelected]}>
-              {t(`settings.theme.${option}`)}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
+    <SegmentedControl
+      options={THEME_OPTIONS}
+      value={preference}
+      onChange={setPreference}
+      labelFor={(option) => t(`settings.theme.${option}`)}
+      styles={styles}
+    />
+  );
+}
+
+const LANGUAGE_OPTIONS: LanguagePreference[] = ['system', ...supportedLanguages];
+
+function LanguageSection({ styles }: { styles: ReturnType<typeof createStyles> }) {
+  const { t } = useTranslation();
+  const [preference, setPreferenceState] = useState<LanguagePreference>(() => getLanguagePreference());
+
+  const handleChange = (option: LanguagePreference) => {
+    setLanguagePreference(option);
+    setPreferenceState(option);
+  };
+
+  return (
+    <SegmentedControl
+      options={LANGUAGE_OPTIONS}
+      value={preference}
+      onChange={handleChange}
+      labelFor={(option) => t(`settings.languageNames.${option}`)}
+      styles={styles}
+    />
   );
 }
 
@@ -91,7 +128,7 @@ export default function SettingsScreen() {
         <AppearanceSection styles={styles} />
       </SettingsSection>
       <SettingsSection title={t('settings.language')} styles={styles}>
-        <PlaceholderRow label={t('settings.comingSoon')} styles={styles} />
+        <LanguageSection styles={styles} />
       </SettingsSection>
       <SettingsSection title={t('settings.data')} styles={styles}>
         <DataSection styles={styles} />
@@ -117,7 +154,6 @@ function createStyles(colors: ThemeColors) {
       paddingVertical: 14,
       paddingHorizontal: 12,
     },
-    rowText: { fontSize: 15, color: colors.textSecondary },
     actionRow: {},
     actionRowText: { fontSize: 15, color: colors.accentText, fontWeight: '600' },
     segmentedControl: {

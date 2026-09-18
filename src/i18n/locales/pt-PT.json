@@ -87,12 +87,16 @@
       "dark": "Escuro"
     },
     "language": "Idioma",
+    "languageNames": {
+      "system": "Sistema",
+      "en": "Inglês",
+      "pt-PT": "Português"
+    },
     "data": "Dados",
     "exportData": "Exportar dados",
     "exporting": "A exportar…",
     "exportErrorTitle": "Falha na exportação",
-    "exportErrorMessage": "Ocorreu um erro ao exportar os seus dados. Tente novamente.",
-    "comingSoon": "Brevemente"
+    "exportErrorMessage": "Ocorreu um erro ao exportar os seus dados. Tente novamente."
   },
   "activityForm": {
     "newTitle": "Nova atividade",
