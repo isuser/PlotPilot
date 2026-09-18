@@ -80,6 +80,14 @@ export default function PlotDetailScreen({ navigation, route }: Props) {
     listAllTagNames().then(setKnownTags);
   }, []);
 
+  const tagSuggestions = useMemo(() => {
+    const query = tagInput.trim().toLowerCase();
+    return knownTags
+      .filter((candidate) => !editTags.some((tag) => tag.toLowerCase() === candidate.toLowerCase()))
+      .filter((candidate) => (query ? candidate.toLowerCase().includes(query) : true))
+      .slice(0, 6);
+  }, [tagInput, knownTags, editTags]);
+
   if (plot === undefined) {
     return (
       <View style={styles.container}>
@@ -125,14 +133,6 @@ export default function PlotDetailScreen({ navigation, route }: Props) {
   const removeTag = (tag: string) => {
     setEditTags((current) => current.filter((existing) => existing !== tag));
   };
-
-  const tagSuggestions = useMemo(() => {
-    const query = tagInput.trim().toLowerCase();
-    return knownTags
-      .filter((candidate) => !editTags.some((tag) => tag.toLowerCase() === candidate.toLowerCase()))
-      .filter((candidate) => (query ? candidate.toLowerCase().includes(query) : true))
-      .slice(0, 6);
-  }, [tagInput, knownTags, editTags]);
 
   const canSave = name.trim().length > 0 && !saving;
 
