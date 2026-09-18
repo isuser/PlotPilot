@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
-import { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Alert, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
+import { buildDataExport } from '../db/export';
 import { useTheme, type ThemePreference } from '../theme/ThemeContext';
 import type { ThemeColors } from '../theme/colors';
 
@@ -23,6 +24,34 @@ function SettingsSection({ title, children, styles }: SettingsSectionProps) {
 
 function PlaceholderRow({ label, styles }: { label: string; styles: ReturnType<typeof createStyles> }) {
   return <Text style={styles.rowText}>{label}</Text>;
+}
+
+function DataSection({ styles }: { styles: ReturnType<typeof createStyles> }) {
+  const { t } = useTranslation();
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const data = await buildDataExport();
+      await Share.share({
+        title: t('settings.exportData'),
+        message: JSON.stringify(data, null, 2),
+      });
+    } catch {
+      Alert.alert(t('settings.exportErrorTitle'), t('settings.exportErrorMessage'));
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  return (
+    <Pressable style={styles.actionRow} onPress={handleExport} disabled={exporting}>
+      <Text style={styles.actionRowText}>
+        {exporting ? t('settings.exporting') : t('settings.exportData')}
+      </Text>
+    </Pressable>
+  );
 }
 
 const THEME_OPTIONS: ThemePreference[] = ['system', 'light', 'dark'];
@@ -65,7 +94,7 @@ export default function SettingsScreen() {
         <PlaceholderRow label={t('settings.comingSoon')} styles={styles} />
       </SettingsSection>
       <SettingsSection title={t('settings.data')} styles={styles}>
-        <PlaceholderRow label={t('settings.comingSoon')} styles={styles} />
+        <DataSection styles={styles} />
       </SettingsSection>
     </View>
   );
@@ -89,6 +118,8 @@ function createStyles(colors: ThemeColors) {
       paddingHorizontal: 12,
     },
     rowText: { fontSize: 15, color: colors.textSecondary },
+    actionRow: {},
+    actionRowText: { fontSize: 15, color: colors.accentText, fontWeight: '600' },
     segmentedControl: {
       flexDirection: 'row',
       backgroundColor: colors.border,
