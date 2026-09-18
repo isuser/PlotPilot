@@ -9,6 +9,8 @@ import { listPlots } from '../db/plots';
 import type { ActivityWithPlot, Plot } from '../db/types';
 import type { RootStackParamList } from '../navigation/types';
 import { DEFAULT_PLOT_COLOR } from '../map/plotColors';
+import { useTheme } from '../theme/ThemeContext';
+import type { ThemeColors } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -17,6 +19,8 @@ const PLOTS_PER_PAGE = 5;
 
 export default function HomeScreen({ navigation }: Props) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [plots, setPlots] = useState<Plot[]>([]);
   const [recentActivities, setRecentActivities] = useState<ActivityWithPlot[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -99,6 +103,7 @@ export default function HomeScreen({ navigation }: Props) {
             value={query}
             onChangeText={setQuery}
             placeholder={t('home.searchPlaceholder')}
+            placeholderTextColor={colors.textSecondary}
             autoCapitalize="none"
           />
 
@@ -273,111 +278,114 @@ export default function HomeScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  content: { padding: 16 },
-  welcome: { fontSize: 22, fontWeight: '700', marginBottom: 16 },
-  searchInput: {
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    fontSize: 16,
-    marginBottom: 10,
-  },
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 12,
-  },
-  chip: {
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 16,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-  },
-  chipSelected: { backgroundColor: '#2E7D32', borderColor: '#2E7D32' },
-  chipText: { fontSize: 13, color: '#333', fontWeight: '600' },
-  chipTextSelected: { color: '#fff' },
-  summaryCard: {
-    backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    marginBottom: 12,
-  },
-  summaryValue: { fontSize: 28, fontWeight: '700', color: '#2E7D32' },
-  summaryLabel: { fontSize: 14, color: '#666', marginTop: 2 },
-  primaryButton: {
-    backgroundColor: '#2E7D32',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  primaryButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  picker: {
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 8,
-  },
-  pickerTitle: { fontSize: 13, color: '#666', marginBottom: 6, marginLeft: 4 },
-  pickerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-  },
-  pickerRowText: { fontSize: 16 },
-  pickerCancel: { paddingVertical: 10, paddingHorizontal: 8, alignSelf: 'flex-end' },
-  pickerCancelText: { color: '#666', fontWeight: '600' },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 8,
-  },
-  sectionTitle: { fontSize: 18, fontWeight: '600' },
-  viewAllText: { color: '#2E7D32', fontWeight: '600' },
-  paginationRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  pageButton: { paddingVertical: 8, paddingHorizontal: 4 },
-  pageButtonText: { color: '#2E7D32', fontWeight: '600' },
-  pageButtonTextDisabled: { opacity: 0.3 },
-  pageIndicator: { color: '#666', fontSize: 13 },
-  emptyText: { textAlign: 'center', color: '#666', marginTop: 12 },
-  colorDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginTop: 5,
-    marginRight: 10,
-  },
-  activityRow: {
-    flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: '#F3F4F6',
-    marginBottom: 8,
-  },
-  activityRowContent: { flex: 1 },
-  activityRowHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  plotName: { fontSize: 16, fontWeight: '600', flexShrink: 1 },
-  date: { fontSize: 13, color: '#666', marginLeft: 8 },
-  activityType: { fontSize: 14, color: '#2E7D32', fontWeight: '600', marginTop: 2 },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    content: { padding: 16 },
+    welcome: { fontSize: 22, fontWeight: '700', marginBottom: 16, color: colors.textPrimary },
+    searchInput: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      fontSize: 16,
+      marginBottom: 10,
+      color: colors.textPrimary,
+    },
+    chipRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginBottom: 12,
+    },
+    chip: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 16,
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+    },
+    chipSelected: { backgroundColor: colors.accent, borderColor: colors.accent },
+    chipText: { fontSize: 13, color: colors.textPrimary, fontWeight: '600' },
+    chipTextSelected: { color: colors.textOnAccent },
+    summaryCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      paddingVertical: 16,
+      paddingHorizontal: 16,
+      marginBottom: 12,
+    },
+    summaryValue: { fontSize: 28, fontWeight: '700', color: colors.accentText },
+    summaryLabel: { fontSize: 14, color: colors.textSecondary, marginTop: 2 },
+    primaryButton: {
+      backgroundColor: colors.accent,
+      borderRadius: 8,
+      paddingVertical: 14,
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    primaryButtonText: { color: colors.textOnAccent, fontSize: 16, fontWeight: '600' },
+    picker: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      padding: 8,
+      marginBottom: 8,
+    },
+    pickerTitle: { fontSize: 13, color: colors.textSecondary, marginBottom: 6, marginLeft: 4 },
+    pickerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 10,
+      paddingHorizontal: 8,
+    },
+    pickerRowText: { fontSize: 16, color: colors.textPrimary },
+    pickerCancel: { paddingVertical: 10, paddingHorizontal: 8, alignSelf: 'flex-end' },
+    pickerCancelText: { color: colors.textSecondary, fontWeight: '600' },
+    sectionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: 20,
+      marginBottom: 8,
+    },
+    sectionTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
+    viewAllText: { color: colors.accentText, fontWeight: '600' },
+    paginationRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    pageButton: { paddingVertical: 8, paddingHorizontal: 4 },
+    pageButtonText: { color: colors.accentText, fontWeight: '600' },
+    pageButtonTextDisabled: { opacity: 0.3 },
+    pageIndicator: { color: colors.textSecondary, fontSize: 13 },
+    emptyText: { textAlign: 'center', color: colors.textSecondary, marginTop: 12 },
+    colorDot: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      marginTop: 5,
+      marginRight: 10,
+    },
+    activityRow: {
+      flexDirection: 'row',
+      paddingVertical: 12,
+      paddingHorizontal: 12,
+      borderRadius: 8,
+      backgroundColor: colors.surface,
+      marginBottom: 8,
+    },
+    activityRowContent: { flex: 1 },
+    activityRowHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    plotName: { fontSize: 16, fontWeight: '600', flexShrink: 1, color: colors.textPrimary },
+    date: { fontSize: 13, color: colors.textSecondary, marginLeft: 8 },
+    activityType: { fontSize: 14, color: colors.accentText, fontWeight: '600', marginTop: 2 },
+  });
+}

@@ -23,6 +23,8 @@ import { osmStyle } from '../map/osmStyle';
 import { DEFAULT_PLOT_COLOR, PLOT_COLORS } from '../map/plotColors';
 import { satelliteStyle } from '../map/satelliteStyle';
 import type { RootStackParamList } from '../navigation/types';
+import { useTheme } from '../theme/ThemeContext';
+import type { ThemeColors } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PlotForm'>;
 
@@ -37,6 +39,8 @@ const TRACE_TIME_INTERVAL_MS = 2000;
 
 export default function PlotFormScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const initialCenter = route.params?.initialCenter ?? DEFAULT_CENTER;
 
   const [name, setName] = useState('');
@@ -220,6 +224,7 @@ export default function PlotFormScreen({ navigation, route }: Props) {
           value={name}
           onChangeText={setName}
           placeholder={t('plotForm.namePlaceholder')}
+          placeholderTextColor={colors.textSecondary}
           autoCapitalize="words"
         />
 
@@ -251,78 +256,85 @@ export default function PlotFormScreen({ navigation, route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  mapContainer: { flex: 1 },
-  map: { flex: 1 },
-  pointMarker: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#fff',
-    borderWidth: 2,
-    borderColor: '#2E7D32',
-  },
-  firstPointMarker: { backgroundColor: '#2E7D32' },
-  hintBanner: {
-    position: 'absolute',
-    top: 16,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  hintText: {
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    color: '#333',
-    overflow: 'hidden',
-  },
-  mapControls: {
-    position: 'absolute',
-    bottom: 16,
-    right: 16,
-    gap: 8,
-  },
-  controlButton: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-  },
-  controlButtonDisabled: { opacity: 0.4 },
-  controlButtonText: { fontWeight: '600', color: '#333' },
-  traceButtonActive: { backgroundColor: '#C62828', borderColor: '#C62828' },
-  traceButtonActiveText: { color: '#fff' },
-  form: { padding: 16 },
-  label: { fontSize: 13, color: '#666', marginTop: 8, marginBottom: 6 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    fontSize: 16,
-  },
-  swatchRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  swatch: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  swatchSelected: { borderColor: '#111' },
-  saveButton: {
-    backgroundColor: '#2E7D32',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  saveButtonDisabled: { opacity: 0.5 },
-  saveButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-});
+// Map overlay chips (hint banner, style/undo/clear controls) intentionally
+// keep constant light colors regardless of theme: they float over map tiles,
+// which stay visually light in both themes, so a "dark chip" here would look
+// out of place rather than themed.
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    mapContainer: { flex: 1 },
+    map: { flex: 1 },
+    pointMarker: {
+      width: 12,
+      height: 12,
+      borderRadius: 6,
+      backgroundColor: '#fff',
+      borderWidth: 2,
+      borderColor: '#2E7D32',
+    },
+    firstPointMarker: { backgroundColor: '#2E7D32' },
+    hintBanner: {
+      position: 'absolute',
+      top: 16,
+      left: 0,
+      right: 0,
+      alignItems: 'center',
+    },
+    hintText: {
+      backgroundColor: 'rgba(255,255,255,0.9)',
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+      borderRadius: 8,
+      color: '#333',
+      overflow: 'hidden',
+    },
+    mapControls: {
+      position: 'absolute',
+      bottom: 16,
+      right: 16,
+      gap: 8,
+    },
+    controlButton: {
+      backgroundColor: '#fff',
+      borderRadius: 8,
+      paddingVertical: 8,
+      paddingHorizontal: 14,
+      borderWidth: 1,
+      borderColor: '#D1D5DB',
+    },
+    controlButtonDisabled: { opacity: 0.4 },
+    controlButtonText: { fontWeight: '600', color: '#333' },
+    traceButtonActive: { backgroundColor: '#C62828', borderColor: '#C62828' },
+    traceButtonActiveText: { color: '#fff' },
+    form: { padding: 16 },
+    label: { fontSize: 13, color: colors.textSecondary, marginTop: 8, marginBottom: 6 },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      fontSize: 16,
+      color: colors.textPrimary,
+    },
+    swatchRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+    swatch: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      borderWidth: 2,
+      borderColor: 'transparent',
+    },
+    swatchSelected: { borderColor: colors.textPrimary },
+    saveButton: {
+      backgroundColor: colors.accent,
+      borderRadius: 8,
+      paddingVertical: 14,
+      alignItems: 'center',
+      marginTop: 20,
+    },
+    saveButtonDisabled: { opacity: 0.5 },
+    saveButtonText: { color: colors.textOnAccent, fontSize: 16, fontWeight: '600' },
+  });
+}

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -21,6 +21,8 @@ import { deletePlot, getPlot, updatePlot } from '../db/plots';
 import type { Activity, BoundaryPoint, Plot } from '../db/types';
 import type { RootStackParamList } from '../navigation/types';
 import { osmStyle } from '../map/osmStyle';
+import { useTheme } from '../theme/ThemeContext';
+import type { ThemeColors } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'PlotDetail'>;
 
@@ -36,6 +38,8 @@ function formatLocation(plot: Plot): string | null {
 
 export default function PlotDetailScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { plotId } = route.params;
   const [plot, setPlot] = useState<Plot | null | undefined>(undefined);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -66,7 +70,7 @@ export default function PlotDetailScreen({ navigation, route }: Props) {
   if (plot === undefined) {
     return (
       <View style={styles.container}>
-        <Text>{t('plotDetail.loading')}</Text>
+        <Text style={styles.rowValue}>{t('plotDetail.loading')}</Text>
       </View>
     );
   }
@@ -74,7 +78,7 @@ export default function PlotDetailScreen({ navigation, route }: Props) {
   if (plot === null) {
     return (
       <View style={styles.container}>
-        <Text>{t('plotDetail.notFound')}</Text>
+        <Text style={styles.rowValue}>{t('plotDetail.notFound')}</Text>
       </View>
     );
   }
@@ -147,7 +151,13 @@ export default function PlotDetailScreen({ navigation, route }: Props) {
       >
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <Text style={styles.label}>{t('plotDetail.name')}</Text>
-          <TextInput style={styles.input} value={name} onChangeText={setName} autoCapitalize="words" />
+          <TextInput
+            style={styles.input}
+            value={name}
+            onChangeText={setName}
+            autoCapitalize="words"
+            placeholderTextColor={colors.textSecondary}
+          />
 
           <Text style={styles.label}>{t('plotDetail.crop')}</Text>
           <TextInput
@@ -155,6 +165,7 @@ export default function PlotDetailScreen({ navigation, route }: Props) {
             value={crop}
             onChangeText={setCrop}
             placeholder={t('plotDetail.cropPlaceholder')}
+            placeholderTextColor={colors.textSecondary}
           />
 
           <Text style={styles.label}>{t('plotDetail.soilType')}</Text>
@@ -163,6 +174,7 @@ export default function PlotDetailScreen({ navigation, route }: Props) {
             value={soilType}
             onChangeText={setSoilType}
             placeholder={t('plotDetail.soilTypePlaceholder')}
+            placeholderTextColor={colors.textSecondary}
           />
 
           <Text style={styles.label}>{t('plotDetail.notes')}</Text>
@@ -171,6 +183,7 @@ export default function PlotDetailScreen({ navigation, route }: Props) {
             value={notes}
             onChangeText={setNotes}
             placeholder={t('plotDetail.notesPlaceholder')}
+            placeholderTextColor={colors.textSecondary}
             multiline
           />
 
@@ -262,16 +275,24 @@ export default function PlotDetailScreen({ navigation, route }: Props) {
               </Pressable>
             </View>
           </View>
-          {plot.crop ? <DetailRow label={t('plotDetail.crop')} value={plot.crop} /> : null}
-          {plot.soilType ? <DetailRow label={t('plotDetail.soilType')} value={plot.soilType} /> : null}
+          {plot.crop ? <DetailRow label={t('plotDetail.crop')} value={plot.crop} styles={styles} /> : null}
+          {plot.soilType ? (
+            <DetailRow label={t('plotDetail.soilType')} value={plot.soilType} styles={styles} />
+          ) : null}
           {plot.area != null ? (
-            <DetailRow label={t('plotDetail.area')} value={`${plot.area.toFixed(2)} ha`} />
+            <DetailRow label={t('plotDetail.area')} value={`${plot.area.toFixed(2)} ha`} styles={styles} />
           ) : null}
           {plot.perimeter != null ? (
-            <DetailRow label={t('plotDetail.perimeter')} value={`${Math.round(plot.perimeter)} m`} />
+            <DetailRow
+              label={t('plotDetail.perimeter')}
+              value={`${Math.round(plot.perimeter)} m`}
+              styles={styles}
+            />
           ) : null}
-          {locationLabel ? <DetailRow label={t('plotDetail.location')} value={locationLabel} /> : null}
-          {plot.notes ? <DetailRow label={t('plotDetail.notes')} value={plot.notes} /> : null}
+          {locationLabel ? (
+            <DetailRow label={t('plotDetail.location')} value={locationLabel} styles={styles} />
+          ) : null}
+          {plot.notes ? <DetailRow label={t('plotDetail.notes')} value={plot.notes} styles={styles} /> : null}
 
           <View style={styles.activitiesHeader}>
             <Text style={styles.sectionTitle}>{t('plotDetail.activities')}</Text>
@@ -299,7 +320,15 @@ export default function PlotDetailScreen({ navigation, route }: Props) {
   );
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) {
+function DetailRow({
+  label,
+  value,
+  styles,
+}: {
+  label: string;
+  value: string;
+  styles: ReturnType<typeof createStyles>;
+}) {
   return (
     <View style={styles.row}>
       <Text style={styles.rowLabel}>{label}</Text>
@@ -308,115 +337,118 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  content: { padding: 16 },
-  titleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  title: { fontSize: 22, fontWeight: '700', flexShrink: 1 },
-  titleActions: { flexDirection: 'row', gap: 8 },
-  editButton: {
-    borderWidth: 1,
-    borderColor: '#2E7D32',
-    borderRadius: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-  },
-  editButtonText: { color: '#2E7D32', fontWeight: '600' },
-  mapButton: {
-    borderWidth: 1,
-    borderColor: '#2E7D32',
-    borderRadius: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-  },
-  mapButtonText: { color: '#2E7D32', fontWeight: '600' },
-  row: { marginBottom: 12 },
-  rowLabel: { fontSize: 13, color: '#666' },
-  rowValue: { fontSize: 16, marginTop: 2 },
-  activitiesHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 24,
-    marginBottom: 8,
-  },
-  sectionTitle: { fontSize: 18, fontWeight: '600' },
-  addButton: {
-    backgroundColor: '#2E7D32',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  addButtonText: { color: '#fff', fontWeight: '600' },
-  emptyText: { textAlign: 'center', color: '#666', marginTop: 12 },
-  activityRow: {
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: '#F3F4F6',
-    marginBottom: 8,
-  },
-  activityType: { fontSize: 16, fontWeight: '600' },
-  activityDate: { fontSize: 13, color: '#666', marginTop: 2 },
-  activityNotes: { fontSize: 14, marginTop: 4 },
-  label: { fontSize: 13, color: '#666', marginTop: 16, marginBottom: 6 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    fontSize: 16,
-  },
-  notesInput: { minHeight: 90, textAlignVertical: 'top' },
-  hintText: { fontSize: 13, color: '#666' },
-  locationMapContainer: {
-    height: 180,
-    borderRadius: 8,
-    overflow: 'hidden',
-    marginTop: 8,
-  },
-  locationMap: { flex: 1 },
-  locationMarker: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#2E7D32',
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  editActions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 28,
-  },
-  cancelButton: {
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-  },
-  cancelButtonText: { color: '#333', fontSize: 16, fontWeight: '600' },
-  saveButton: {
-    backgroundColor: '#2E7D32',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  saveButtonFlex: { flex: 1 },
-  saveButtonDisabled: { opacity: 0.5 },
-  saveButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  deleteButton: {
-    alignItems: 'center',
-    paddingVertical: 14,
-    marginTop: 12,
-  },
-  deleteButtonText: { color: '#C62828', fontSize: 15, fontWeight: '600' },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    content: { padding: 16 },
+    titleRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    title: { fontSize: 22, fontWeight: '700', flexShrink: 1, color: colors.textPrimary },
+    titleActions: { flexDirection: 'row', gap: 8 },
+    editButton: {
+      borderWidth: 1,
+      borderColor: colors.accentText,
+      borderRadius: 8,
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+    },
+    editButtonText: { color: colors.accentText, fontWeight: '600' },
+    mapButton: {
+      borderWidth: 1,
+      borderColor: colors.accentText,
+      borderRadius: 8,
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+    },
+    mapButtonText: { color: colors.accentText, fontWeight: '600' },
+    row: { marginBottom: 12 },
+    rowLabel: { fontSize: 13, color: colors.textSecondary },
+    rowValue: { fontSize: 16, marginTop: 2, color: colors.textPrimary },
+    activitiesHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: 24,
+      marginBottom: 8,
+    },
+    sectionTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
+    addButton: {
+      backgroundColor: colors.accent,
+      borderRadius: 8,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+    },
+    addButtonText: { color: colors.textOnAccent, fontWeight: '600' },
+    emptyText: { textAlign: 'center', color: colors.textSecondary, marginTop: 12 },
+    activityRow: {
+      paddingVertical: 12,
+      paddingHorizontal: 12,
+      borderRadius: 8,
+      backgroundColor: colors.surface,
+      marginBottom: 8,
+    },
+    activityType: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
+    activityDate: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+    activityNotes: { fontSize: 14, marginTop: 4, color: colors.textPrimary },
+    label: { fontSize: 13, color: colors.textSecondary, marginTop: 16, marginBottom: 6 },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      fontSize: 16,
+      color: colors.textPrimary,
+    },
+    notesInput: { minHeight: 90, textAlignVertical: 'top' },
+    hintText: { fontSize: 13, color: colors.textSecondary },
+    locationMapContainer: {
+      height: 180,
+      borderRadius: 8,
+      overflow: 'hidden',
+      marginTop: 8,
+    },
+    locationMap: { flex: 1 },
+    locationMarker: {
+      width: 16,
+      height: 16,
+      borderRadius: 8,
+      backgroundColor: '#2E7D32',
+      borderWidth: 2,
+      borderColor: '#fff',
+    },
+    editActions: {
+      flexDirection: 'row',
+      gap: 12,
+      marginTop: 28,
+    },
+    cancelButton: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      paddingVertical: 14,
+      paddingHorizontal: 20,
+      alignItems: 'center',
+    },
+    cancelButtonText: { color: colors.textPrimary, fontSize: 16, fontWeight: '600' },
+    saveButton: {
+      backgroundColor: colors.accent,
+      borderRadius: 8,
+      paddingVertical: 14,
+      alignItems: 'center',
+    },
+    saveButtonFlex: { flex: 1 },
+    saveButtonDisabled: { opacity: 0.5 },
+    saveButtonText: { color: colors.textOnAccent, fontSize: 16, fontWeight: '600' },
+    deleteButton: {
+      alignItems: 'center',
+      paddingVertical: 14,
+      marginTop: 12,
+    },
+    deleteButtonText: { color: colors.dangerText, fontSize: 15, fontWeight: '600' },
+  });
+}

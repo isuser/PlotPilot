@@ -17,6 +17,8 @@ export function MapStyleToggle({ mode, onToggle }: Props) {
   );
 }
 
+// Floats over map tiles, which stay visually light in both themes, so this
+// keeps constant colors instead of following the app theme.
 const styles = StyleSheet.create({
   button: {
     position: 'absolute',

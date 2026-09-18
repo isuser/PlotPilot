@@ -5,4 +5,5 @@ export type RootStackParamList = {
   PlotDetail: { plotId: number };
   ActivityForm: { plotId: number; activityId?: number };
   Timeline: undefined;
+  Settings: undefined;
 };
