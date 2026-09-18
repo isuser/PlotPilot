@@ -59,6 +59,8 @@
     "cropPlaceholder": "ex.: Oliveiras",
     "soilType": "Tipo de solo",
     "soilTypePlaceholder": "ex.: Argilo-limoso",
+    "tags": "Etiquetas",
+    "tagsPlaceholder": "Adicione uma etiqueta e prima concluído",
     "area": "Área",
     "perimeter": "Perímetro",
     "location": "Localização",

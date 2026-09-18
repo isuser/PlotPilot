@@ -59,6 +59,8 @@
     "cropPlaceholder": "e.g. Olives",
     "soilType": "Soil type",
     "soilTypePlaceholder": "e.g. Clay loam",
+    "tags": "Tags",
+    "tagsPlaceholder": "Add a tag and press done",
     "area": "Area",
     "perimeter": "Perimeter",
     "location": "Location",

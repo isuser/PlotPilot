@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -18,6 +18,7 @@ import { Camera, Map, Marker } from '@maplibre/maplibre-react-native';
 
 import { listActivitiesForPlot } from '../db/activities';
 import { deletePlot, getPlot, updatePlot } from '../db/plots';
+import { listAllTagNames, listTagsForPlot, setPlotTags } from '../db/tags';
 import type { Activity, BoundaryPoint, Plot } from '../db/types';
 import type { RootStackParamList } from '../navigation/types';
 import { osmStyle } from '../map/osmStyle';
@@ -43,12 +44,17 @@ export default function PlotDetailScreen({ navigation, route }: Props) {
   const { plotId } = route.params;
   const [plot, setPlot] = useState<Plot | null | undefined>(undefined);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState('');
   const [crop, setCrop] = useState('');
   const [soilType, setSoilType] = useState('');
   const [notes, setNotes] = useState('');
   const [manualLocation, setManualLocation] = useState<BoundaryPoint | null>(null);
+  const [editTags, setEditTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
+  const [tagInputFocused, setTagInputFocused] = useState(false);
+  const [knownTags, setKnownTags] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -61,11 +67,18 @@ export default function PlotDetailScreen({ navigation, route }: Props) {
       listActivitiesForPlot(plotId).then((rows) => {
         if (!cancelled) setActivities(rows);
       });
+      listTagsForPlot(plotId).then((rows) => {
+        if (!cancelled) setTags(rows);
+      });
       return () => {
         cancelled = true;
       };
     }, [plotId]),
   );
+
+  useEffect(() => {
+    listAllTagNames().then(setKnownTags);
+  }, []);
 
   if (plot === undefined) {
     return (
@@ -95,8 +108,31 @@ export default function PlotDetailScreen({ navigation, route }: Props) {
         ? { latitude: plot.latitude, longitude: plot.longitude }
         : null,
     );
+    setEditTags(tags);
+    setTagInput('');
     setEditing(true);
   };
+
+  const addTag = (raw: string) => {
+    const value = raw.trim();
+    if (!value) return;
+    setEditTags((current) =>
+      current.some((tag) => tag.toLowerCase() === value.toLowerCase()) ? current : [...current, value],
+    );
+    setTagInput('');
+  };
+
+  const removeTag = (tag: string) => {
+    setEditTags((current) => current.filter((existing) => existing !== tag));
+  };
+
+  const tagSuggestions = useMemo(() => {
+    const query = tagInput.trim().toLowerCase();
+    return knownTags
+      .filter((candidate) => !editTags.some((tag) => tag.toLowerCase() === candidate.toLowerCase()))
+      .filter((candidate) => (query ? candidate.toLowerCase().includes(query) : true))
+      .slice(0, 6);
+  }, [tagInput, knownTags, editTags]);
 
   const canSave = name.trim().length > 0 && !saving;
 
@@ -113,7 +149,10 @@ export default function PlotDetailScreen({ navigation, route }: Props) {
           ? {}
           : { latitude: manualLocation?.latitude ?? null, longitude: manualLocation?.longitude ?? null }),
       });
+      await setPlotTags(plot.id, editTags);
       if (updated) setPlot(updated);
+      setTags(editTags);
+      setKnownTags((current) => Array.from(new Set([...current, ...editTags])).sort((a, b) => a.localeCompare(b)));
       setEditing(false);
     } finally {
       setSaving(false);
@@ -186,6 +225,41 @@ export default function PlotDetailScreen({ navigation, route }: Props) {
             placeholderTextColor={colors.textSecondary}
             multiline
           />
+
+          <Text style={styles.label}>{t('plotDetail.tags')}</Text>
+          {editTags.length > 0 ? (
+            <View style={styles.tagsWrap}>
+              {editTags.map((tag) => (
+                <Pressable key={tag} style={styles.tagChip} onPress={() => removeTag(tag)}>
+                  <Text style={styles.tagChipText}>{tag}</Text>
+                  <Text style={styles.tagChipRemove}>×</Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
+          <TextInput
+            style={styles.input}
+            value={tagInput}
+            onChangeText={setTagInput}
+            onFocus={() => setTagInputFocused(true)}
+            // Delayed so a tap on a suggestion row (which blurs this input first)
+            // still lands before the list unmounts.
+            onBlur={() => setTimeout(() => setTagInputFocused(false), 150)}
+            onSubmitEditing={() => addTag(tagInput)}
+            placeholder={t('plotDetail.tagsPlaceholder')}
+            placeholderTextColor={colors.textSecondary}
+            autoCapitalize="none"
+            returnKeyType="done"
+          />
+          {tagInputFocused && tagSuggestions.length > 0 ? (
+            <View style={styles.suggestions}>
+              {tagSuggestions.map((suggestion) => (
+                <Pressable key={suggestion} style={styles.suggestionRow} onPress={() => addTag(suggestion)}>
+                  <Text style={styles.suggestionText}>{suggestion}</Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
 
           <Text style={styles.label}>{t('plotDetail.location')}</Text>
           {hasBoundary ? (
@@ -278,6 +352,18 @@ export default function PlotDetailScreen({ navigation, route }: Props) {
           {plot.crop ? <DetailRow label={t('plotDetail.crop')} value={plot.crop} styles={styles} /> : null}
           {plot.soilType ? (
             <DetailRow label={t('plotDetail.soilType')} value={plot.soilType} styles={styles} />
+          ) : null}
+          {tags.length > 0 ? (
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>{t('plotDetail.tags')}</Text>
+              <View style={styles.tagsWrap}>
+                {tags.map((tag) => (
+                  <View key={tag} style={styles.tagChip}>
+                    <Text style={styles.tagChipText}>{tag}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
           ) : null}
           {plot.area != null ? (
             <DetailRow label={t('plotDetail.area')} value={`${plot.area.toFixed(2)} ha`} styles={styles} />
@@ -405,6 +491,33 @@ function createStyles(colors: ThemeColors) {
       color: colors.textPrimary,
     },
     notesInput: { minHeight: 90, textAlignVertical: 'top' },
+    tagsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6, marginBottom: 8 },
+    tagChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderRadius: 14,
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+      gap: 6,
+    },
+    tagChipText: { fontSize: 14, color: colors.textPrimary },
+    tagChipRemove: { fontSize: 14, color: colors.textSecondary, fontWeight: '700' },
+    suggestions: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderTopWidth: 0,
+      borderBottomLeftRadius: 8,
+      borderBottomRightRadius: 8,
+      overflow: 'hidden',
+    },
+    suggestionRow: {
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderTopWidth: 1,
+      borderTopColor: colors.surface,
+    },
+    suggestionText: { fontSize: 15, color: colors.textPrimary },
     hintText: { fontSize: 13, color: colors.textSecondary },
     locationMapContainer: {
       height: 180,

@@ -30,6 +30,19 @@ export async function createSchema(db: SQLiteDatabase): Promise<void> {
 
     CREATE INDEX IF NOT EXISTS idx_activities_plot_id ON activities(plot_id);
     CREATE INDEX IF NOT EXISTS idx_activities_date ON activities(date);
+
+    CREATE TABLE IF NOT EXISTS tags (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE COLLATE NOCASE
+    );
+
+    CREATE TABLE IF NOT EXISTS plot_tags (
+      plot_id INTEGER NOT NULL REFERENCES plots(id) ON DELETE CASCADE,
+      tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+      PRIMARY KEY (plot_id, tag_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_plot_tags_tag_id ON plot_tags(tag_id);
   `);
 
   // CREATE TABLE IF NOT EXISTS above is a no-op on databases that already
