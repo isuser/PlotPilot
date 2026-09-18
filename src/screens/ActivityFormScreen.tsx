@@ -21,6 +21,8 @@ import {
   updateActivity,
 } from '../db/activities';
 import type { RootStackParamList } from '../navigation/types';
+import { useTheme } from '../theme/ThemeContext';
+import type { ThemeColors } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ActivityForm'>;
 
@@ -38,6 +40,8 @@ function parseDateInput(value: string): Date {
 
 export default function ActivityFormScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { plotId, activityId } = route.params;
   const isEditing = activityId != null;
 
@@ -119,6 +123,7 @@ export default function ActivityFormScreen({ navigation, route }: Props) {
           // still lands before the list unmounts.
           onBlur={() => setTimeout(() => setTypeFocused(false), 150)}
           placeholder={t('activityForm.typePlaceholder')}
+          placeholderTextColor={colors.textSecondary}
           autoCapitalize="words"
         />
         {typeFocused && suggestions.length > 0 ? (
@@ -137,7 +142,7 @@ export default function ActivityFormScreen({ navigation, route }: Props) {
 
         <Text style={styles.label}>{t('activityForm.date')}</Text>
         <Pressable style={styles.input} onPress={() => setShowDatePicker(true)}>
-          <Text>{date.toLocaleDateString()}</Text>
+          <Text style={styles.dateText}>{date.toLocaleDateString()}</Text>
         </Pressable>
         {showDatePicker ? (
           <>
@@ -163,6 +168,7 @@ export default function ActivityFormScreen({ navigation, route }: Props) {
           value={notes}
           onChangeText={setNotes}
           placeholder={t('activityForm.notesPlaceholder')}
+          placeholderTextColor={colors.textSecondary}
           multiline
         />
 
@@ -178,43 +184,47 @@ export default function ActivityFormScreen({ navigation, route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  content: { padding: 16 },
-  label: { fontSize: 13, color: '#666', marginTop: 16, marginBottom: 6 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    fontSize: 16,
-  },
-  notesInput: { minHeight: 90, textAlignVertical: 'top' },
-  suggestions: {
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderTopWidth: 0,
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8,
-    overflow: 'hidden',
-  },
-  suggestionRow: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-  },
-  suggestionText: { fontSize: 15 },
-  saveButton: {
-    backgroundColor: '#2E7D32',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 28,
-  },
-  saveButtonDisabled: { opacity: 0.5 },
-  saveButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  doneButton: { alignSelf: 'flex-end', paddingVertical: 8, paddingHorizontal: 12 },
-  doneButtonText: { color: '#2E7D32', fontSize: 15, fontWeight: '600' },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    content: { padding: 16 },
+    label: { fontSize: 13, color: colors.textSecondary, marginTop: 16, marginBottom: 6 },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      fontSize: 16,
+      color: colors.textPrimary,
+    },
+    dateText: { color: colors.textPrimary },
+    notesInput: { minHeight: 90, textAlignVertical: 'top' },
+    suggestions: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderTopWidth: 0,
+      borderBottomLeftRadius: 8,
+      borderBottomRightRadius: 8,
+      overflow: 'hidden',
+    },
+    suggestionRow: {
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderTopWidth: 1,
+      borderTopColor: colors.surface,
+    },
+    suggestionText: { fontSize: 15, color: colors.textPrimary },
+    saveButton: {
+      backgroundColor: colors.accent,
+      borderRadius: 8,
+      paddingVertical: 14,
+      alignItems: 'center',
+      marginTop: 28,
+    },
+    saveButtonDisabled: { opacity: 0.5 },
+    saveButtonText: { color: colors.textOnAccent, fontSize: 16, fontWeight: '600' },
+    doneButton: { alignSelf: 'flex-end', paddingVertical: 8, paddingHorizontal: 12 },
+    doneButtonText: { color: colors.accentText, fontSize: 15, fontWeight: '600' },
+  });
+}

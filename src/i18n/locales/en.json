@@ -78,6 +78,18 @@
     "addActivity": "Add activity",
     "noActivities": "No activities logged yet"
   },
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "theme": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "language": "Language",
+    "data": "Data",
+    "comingSoon": "Coming soon"
+  },
   "activityForm": {
     "newTitle": "New activity",
     "editTitle": "Edit activity",

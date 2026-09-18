@@ -23,6 +23,8 @@ import { MapStyleToggle, type MapStyleMode } from '../map/MapStyleToggle';
 import { osmStyle } from '../map/osmStyle';
 import { DEFAULT_PLOT_COLOR } from '../map/plotColors';
 import { satelliteStyle } from '../map/satelliteStyle';
+import { useTheme } from '../theme/ThemeContext';
+import type { ThemeColors } from '../theme/colors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Map'>;
 
@@ -41,6 +43,8 @@ function plotCoordinate(plot: Plot): [number, number] | null {
 
 export default function MapScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [plots, setPlots] = useState<Plot[]>([]);
   const [mapStyleMode, setMapStyleMode] = useState<MapStyleMode>('street');
   const networkState = useNetworkState();
@@ -190,66 +194,71 @@ export default function MapScreen({ navigation, route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  map: { flex: 1 },
-  markerPin: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#2E7D32',
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  offlineBanner: {
-    backgroundColor: '#B45309',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  offlineBannerText: {
-    color: '#fff',
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  listContent: { padding: 16 },
-  listItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: '#F3F4F6',
-    marginBottom: 8,
-  },
-  listItemTitle: { fontSize: 16, fontWeight: '600' },
-  listItemSubtitle: { fontSize: 13, color: '#666', marginTop: 2 },
-  emptyText: { textAlign: 'center', color: '#666', marginTop: 24 },
-  fab: {
-    position: 'absolute',
-    right: 16,
-    bottom: 24,
-    backgroundColor: '#2E7D32',
-    borderRadius: 24,
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  fabText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  emptyOverlay: {
-    position: 'absolute',
-    top: 16,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  emptyOverlayText: {
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    color: '#666',
-    overflow: 'hidden',
-  },
-});
+// The empty-state overlay and FAB float over map tiles, which stay visually
+// light in both themes, so they intentionally keep constant colors instead
+// of following the app theme.
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    map: { flex: 1 },
+    markerPin: {
+      width: 16,
+      height: 16,
+      borderRadius: 8,
+      backgroundColor: '#2E7D32',
+      borderWidth: 2,
+      borderColor: '#fff',
+    },
+    offlineBanner: {
+      backgroundColor: '#B45309',
+      paddingVertical: 8,
+      paddingHorizontal: 16,
+    },
+    offlineBannerText: {
+      color: '#fff',
+      fontWeight: '600',
+      textAlign: 'center',
+    },
+    listContent: { padding: 16 },
+    listItem: {
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: 8,
+      backgroundColor: colors.surface,
+      marginBottom: 8,
+    },
+    listItemTitle: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
+    listItemSubtitle: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+    emptyText: { textAlign: 'center', color: colors.textSecondary, marginTop: 24 },
+    fab: {
+      position: 'absolute',
+      right: 16,
+      bottom: 24,
+      backgroundColor: '#2E7D32',
+      borderRadius: 24,
+      paddingVertical: 12,
+      paddingHorizontal: 18,
+      elevation: 3,
+      shadowColor: '#000',
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
+    },
+    fabText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+    emptyOverlay: {
+      position: 'absolute',
+      top: 16,
+      left: 0,
+      right: 0,
+      alignItems: 'center',
+    },
+    emptyOverlayText: {
+      backgroundColor: 'rgba(255,255,255,0.9)',
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+      borderRadius: 8,
+      color: '#666',
+      overflow: 'hidden',
+    },
+  });
+}

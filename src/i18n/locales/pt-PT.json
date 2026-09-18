@@ -78,6 +78,18 @@
     "addActivity": "Adicionar atividade",
     "noActivities": "Ainda não há atividades registadas"
   },
+  "settings": {
+    "title": "Definições",
+    "appearance": "Aparência",
+    "theme": {
+      "system": "Sistema",
+      "light": "Claro",
+      "dark": "Escuro"
+    },
+    "language": "Idioma",
+    "data": "Dados",
+    "comingSoon": "Brevemente"
+  },
   "activityForm": {
     "newTitle": "Nova atividade",
     "editTitle": "Editar atividade",
