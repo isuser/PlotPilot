@@ -88,6 +88,10 @@
     },
     "language": "Language",
     "data": "Data",
+    "exportData": "Export data",
+    "exporting": "Exporting…",
+    "exportErrorTitle": "Export failed",
+    "exportErrorMessage": "Something went wrong while exporting your data. Please try again.",
     "comingSoon": "Coming soon"
   },
   "activityForm": {
