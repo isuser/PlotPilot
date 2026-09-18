@@ -27,12 +27,16 @@ Drawing a plot boundary by tapping points over the satellite basemap — area, c
 
 ## Getting Started
 
+This app uses native modules (MapLibre, SQLite, Location, a native date picker) that aren't included in [Expo Go](https://expo.dev/go), so it needs a [custom development build](https://docs.expo.dev/develop/development-builds/introduction/) instead:
+
 ```bash
 npm install
-npm start
+npx expo run:ios      # or: npx expo run:android
 ```
 
-Then press `i` for iOS simulator, `a` for Android emulator, or `w` for web — or scan the QR code with the [Expo Go](https://expo.dev/go) app on your device.
+This builds and installs a dev client on a simulator/emulator (add `--device` to target a connected physical device), then starts Metro and opens the app automatically. After that, `npm start` is enough for day-to-day work — you only need `run:ios`/`run:android` again after adding a native dependency or changing native config in `app.json` (e.g. `userInterfaceStyle`, permissions).
+
+There's no web target: this app doesn't include `react-native-web`.
 
 ## License
 
