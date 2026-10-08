@@ -128,7 +128,17 @@
     "importErrorBadShape": "Esse JSON não corresponde ao formato de exportação do PlotPilot.",
     "importErrorBadPlots": "Uma ou mais parcelas nesse ficheiro têm campos obrigatórios em falta.",
     "importErrorBadActivities": "Uma ou mais atividades nesse ficheiro têm campos obrigatórios em falta.",
-    "importErrorGeneric": "Ocorreu um erro ao importar os seus dados. Tente novamente."
+    "importErrorGeneric": "Ocorreu um erro ao importar os seus dados. Tente novamente.",
+    "importKml": "Importar parcelas de ficheiro KML",
+    "importKmlHint": "Polígonos do Google Earth ou de outras aplicações de mapas",
+    "kmlConfirmMessage": "Total a importar: {{plotsLabel}}. A cultura, o tipo de solo e as notas ficarão vazios.",
+    "kmlSkipped_one": "{{count}} marcador sem polígono será ignorado.",
+    "kmlSkipped_other": "{{count}} marcadores sem polígono serão ignorados.",
+    "kmlSuccessMessage": "Importadas {{plotsLabel}}.",
+    "kmlDefaultPlotName": "Parcela importada {{index}}",
+    "kmlErrorNotXml": "Não foi possível ler esse ficheiro. Escolha um ficheiro .kml (ficheiros .kmz comprimidos não são suportados).",
+    "kmlErrorNotKml": "Esse ficheiro não é um ficheiro KML.",
+    "kmlErrorNoPolygons": "Não foram encontrados limites de parcelas. O ficheiro precisa de pelo menos um marcador com um polígono."
   },
   "activityForm": {
     "newTitle": "Nova atividade",

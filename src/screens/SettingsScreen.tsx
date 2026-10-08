@@ -4,9 +4,12 @@ import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-nativ
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import * as DocumentPicker from 'expo-document-picker';
+import { File } from 'expo-file-system';
 
 import type { DataExport } from '../db/export';
 import { ImportParseError, importDataExport, parseDataExport } from '../db/import';
+import { KmlParseError, importKmlPlots, parseKml, type KmlParseResult } from '../db/kml';
 import { getLanguagePreference, setLanguagePreference, supportedLanguages, type LanguagePreference } from '../i18n';
 import type { RootStackParamList } from '../navigation/types';
 import { useTheme, type ThemePreference } from '../theme/ThemeContext';
@@ -41,6 +44,67 @@ function ExportSection({ styles }: { styles: ReturnType<typeof createStyles> }) 
   return (
     <Pressable style={styles.actionRow} onPress={() => navigation.navigate('Export')}>
       <Text style={styles.actionRowText}>{t('settings.exportData')}</Text>
+    </Pressable>
+  );
+}
+
+const KML_ERROR_KEYS: Record<KmlParseError['code'], string> = {
+  notXml: 'settings.kmlErrorNotXml',
+  notKml: 'settings.kmlErrorNotKml',
+  noPolygons: 'settings.kmlErrorNoPolygons',
+};
+
+function KmlImportRow({ styles }: { styles: ReturnType<typeof createStyles> }) {
+  const { t } = useTranslation();
+  const [importing, setImporting] = useState(false);
+
+  const runImport = async (parsed: KmlParseResult) => {
+    setImporting(true);
+    try {
+      const count = await importKmlPlots(parsed.plots, (index) => t('settings.kmlDefaultPlotName', { index }));
+      Alert.alert(
+        t('settings.importSuccessTitle'),
+        t('settings.kmlSuccessMessage', { plotsLabel: t('settings.importPlotsCount', { count }) }),
+      );
+    } catch {
+      Alert.alert(t('settings.importErrorTitle'), t('settings.importErrorGeneric'));
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  // Any file type is allowed: iOS doesn't reliably map the KML MIME type,
+  // so filtering would grey out valid files. The parser rejects non-KML.
+  const handlePick = async () => {
+    const result = await DocumentPicker.getDocumentAsync({ type: '*/*', copyToCacheDirectory: true });
+    if (result.canceled || result.assets.length === 0) return;
+
+    let parsed: KmlParseResult;
+    try {
+      parsed = parseKml(await new File(result.assets[0].uri).text());
+    } catch (error) {
+      const key = error instanceof KmlParseError ? KML_ERROR_KEYS[error.code] : 'settings.kmlErrorNotXml';
+      Alert.alert(t('settings.importErrorTitle'), t(key));
+      return;
+    }
+
+    const summary = t('settings.kmlConfirmMessage', {
+      plotsLabel: t('settings.importPlotsCount', { count: parsed.plots.length }),
+    });
+    const skipped =
+      parsed.skippedPlacemarks > 0 ? t('settings.kmlSkipped', { count: parsed.skippedPlacemarks }) : null;
+    Alert.alert(t('settings.importConfirmTitle'), skipped ? `${summary}\n\n${skipped}` : summary, [
+      { text: t('plotDetail.cancel'), style: 'cancel' },
+      { text: t('settings.importConfirmButton'), onPress: () => runImport(parsed) },
+    ]);
+  };
+
+  return (
+    <Pressable style={styles.actionRow} onPress={handlePick} disabled={importing}>
+      <Text style={[styles.actionRowText, importing && styles.actionRowTextDisabled]}>
+        {importing ? t('settings.importing') : t('settings.importKml')}
+      </Text>
+      <Text style={styles.actionRowHint}>{t('settings.importKmlHint')}</Text>
     </Pressable>
   );
 }
@@ -121,6 +185,8 @@ function ImportSection({ styles, onLanguageChange }: ImportSectionProps) {
           {importing ? t('settings.importing') : t('settings.importData')}
         </Text>
       </Pressable>
+      <View style={styles.divider} />
+      <KmlImportRow styles={styles} />
     </View>
   );
 }
@@ -245,6 +311,8 @@ function createStyles(colors: ThemeColors) {
     actionRow: {},
     actionRowText: { fontSize: 15, color: colors.accentText, fontWeight: '600' },
     actionRowTextDisabled: { opacity: 0.4 },
+    actionRowHint: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+    divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border },
     importInput: {
       borderWidth: 1,
       borderColor: colors.border,
