@@ -21,6 +21,7 @@ import { deletePlot, getPlot, updatePlot } from '../db/plots';
 import { listAllTagNames, listTagsForPlot, setPlotTags } from '../db/tags';
 import type { Activity, BoundaryPoint, Plot } from '../db/types';
 import type { RootStackParamList } from '../navigation/types';
+import { openDirections } from '../map/directions';
 import { osmStyle } from '../map/osmStyle';
 import { useTheme } from '../theme/ThemeContext';
 import type { ThemeColors } from '../theme/colors';
@@ -325,6 +326,19 @@ export default function PlotDetailScreen({ navigation, route }: Props) {
 
   const locationLabel = formatLocation(plot);
 
+  const handleGetDirections = () => {
+    if (plot.latitude == null || plot.longitude == null) return;
+    openDirections(
+      { latitude: plot.latitude, longitude: plot.longitude, name: plot.name },
+      {
+        title: t('plotDetail.directionsChooseApp'),
+        appleMaps: t('plotDetail.directionsAppleMaps'),
+        googleMaps: t('plotDetail.directionsGoogleMaps'),
+        cancel: t('plotDetail.cancel'),
+      },
+    ).catch(() => Alert.alert(t('plotDetail.directionsErrorTitle'), t('plotDetail.directionsErrorMessage')));
+  };
+
   return (
     <FlatList
       style={styles.container}
@@ -376,7 +390,13 @@ export default function PlotDetailScreen({ navigation, route }: Props) {
             />
           ) : null}
           {locationLabel ? (
-            <DetailRow label={t('plotDetail.location')} value={locationLabel} styles={styles} />
+            <View style={styles.row}>
+              <Text style={styles.rowLabel}>{t('plotDetail.location')}</Text>
+              <Text style={styles.rowValue}>{locationLabel}</Text>
+              <Pressable style={[styles.mapButton, styles.directionsButton]} onPress={handleGetDirections}>
+                <Text style={styles.mapButtonText}>{t('plotDetail.getDirections')}</Text>
+              </Pressable>
+            </View>
           ) : null}
           {plot.notes ? <DetailRow label={t('plotDetail.notes')} value={plot.notes} styles={styles} /> : null}
 
@@ -451,6 +471,7 @@ function createStyles(colors: ThemeColors) {
       paddingHorizontal: 12,
     },
     mapButtonText: { color: colors.accentText, fontWeight: '600' },
+    directionsButton: { alignSelf: 'flex-start', marginTop: 8 },
     row: { marginBottom: 12 },
     rowLabel: { fontSize: 13, color: colors.textSecondary },
     rowValue: { fontSize: 16, marginTop: 2, color: colors.textPrimary },
