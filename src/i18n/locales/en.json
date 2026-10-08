@@ -11,14 +11,18 @@
     "selectPlot": "Which plot?",
     "recentActivity": "Recent activity",
     "viewAll": "View all",
-    "searchPlaceholder": "Search plots by name",
+    "searchPlaceholder": "Search plots by name or tag",
     "allCrops": "All",
     "searchResults": "Search results",
     "noResults": "No plots match your search",
     "plots": "Plots",
     "prev": "‹ Prev",
     "next": "Next ›",
-    "pageIndicator": "{{page}} of {{total}}"
+    "pageIndicator": "{{page}} of {{total}}",
+    "tags": "Tags",
+    "tagsSelected_one": "Tags · {{count}} selected",
+    "tagsSelected_other": "Tags · {{count}} selected",
+    "clearTags": "Clear"
   },
   "map": {
     "title": "Map",
