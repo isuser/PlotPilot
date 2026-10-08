@@ -135,7 +135,10 @@
     "notes": "Notes",
     "notesPlaceholder": "Optional notes",
     "save": "Save",
-    "done": "Done"
+    "done": "Done",
+    "deleteActivity": "Delete activity",
+    "deleteConfirmTitle": "Delete activity?",
+    "deleteConfirmMessage": "This will permanently delete this activity. This can't be undone."
   },
   "export": {
     "title": "Export data",

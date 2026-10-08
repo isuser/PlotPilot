@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -16,6 +17,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import {
   DEFAULT_ACTIVITY_TYPES,
   createActivity,
+  deleteActivity,
   getActivity,
   listDistinctActivityTypes,
   updateActivity,
@@ -52,6 +54,7 @@ export default function ActivityFormScreen({ navigation, route }: Props) {
   const [typeFocused, setTypeFocused] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     listDistinctActivityTypes().then((usedTypes) => {
@@ -89,7 +92,7 @@ export default function ActivityFormScreen({ navigation, route }: Props) {
       .slice(0, 6);
   }, [type, knownTypes]);
 
-  const canSave = type.trim().length > 0 && !saving;
+  const canSave = type.trim().length > 0 && !saving && !deleting;
 
   const handleSave = async () => {
     if (!canSave) return;
@@ -105,6 +108,26 @@ export default function ActivityFormScreen({ navigation, route }: Props) {
     } finally {
       setSaving(false);
     }
+  };
+
+  const confirmDelete = () => {
+    if (activityId == null) return;
+    Alert.alert(t('activityForm.deleteConfirmTitle'), t('activityForm.deleteConfirmMessage'), [
+      { text: t('plotDetail.cancel'), style: 'cancel' },
+      {
+        text: t('plotDetail.delete'),
+        style: 'destructive',
+        onPress: async () => {
+          setDeleting(true);
+          try {
+            await deleteActivity(activityId);
+            navigation.goBack();
+          } finally {
+            setDeleting(false);
+          }
+        },
+      },
+    ]);
   };
 
   return (
@@ -179,6 +202,12 @@ export default function ActivityFormScreen({ navigation, route }: Props) {
         >
           <Text style={styles.saveButtonText}>{t('activityForm.save')}</Text>
         </Pressable>
+
+        {isEditing ? (
+          <Pressable style={styles.deleteButton} onPress={confirmDelete} disabled={saving || deleting}>
+            <Text style={styles.deleteButtonText}>{t('activityForm.deleteActivity')}</Text>
+          </Pressable>
+        ) : null}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -224,6 +253,8 @@ function createStyles(colors: ThemeColors) {
     },
     saveButtonDisabled: { opacity: 0.5 },
     saveButtonText: { color: colors.textOnAccent, fontSize: 16, fontWeight: '600' },
+    deleteButton: { alignItems: 'center', paddingVertical: 14, marginTop: 12 },
+    deleteButtonText: { color: colors.dangerText, fontSize: 15, fontWeight: '600' },
     doneButton: { alignSelf: 'flex-end', paddingVertical: 8, paddingHorizontal: 12 },
     doneButtonText: { color: colors.accentText, fontSize: 15, fontWeight: '600' },
   });

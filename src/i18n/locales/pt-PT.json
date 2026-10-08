@@ -135,7 +135,10 @@
     "notes": "Notas",
     "notesPlaceholder": "Notas opcionais",
     "save": "Guardar",
-    "done": "Concluído"
+    "done": "Concluído",
+    "deleteActivity": "Eliminar atividade",
+    "deleteConfirmTitle": "Eliminar atividade?",
+    "deleteConfirmMessage": "Esta atividade será eliminada permanentemente. Esta ação não pode ser desfeita."
   },
   "export": {
     "title": "Exportar dados",
