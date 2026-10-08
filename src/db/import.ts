@@ -1,7 +1,9 @@
 import { createActivity } from './activities';
 import { createPlot } from './plots';
-import type { DataExport } from './export';
+import { setPlotTags } from './tags';
+import type { DataExport, ExportedSettings } from './export';
 import type { BoundaryPoint } from './types';
+import { supportedLanguages } from '../i18n';
 
 export type ImportParseErrorCode = 'notJson' | 'badShape' | 'badPlots' | 'badActivities';
 
@@ -25,7 +27,12 @@ function isNullableNumber(value: unknown): value is number | null {
   return value === null || typeof value === 'number';
 }
 
-function isImportPlot(value: unknown): value is DataExport['plots'][number] {
+function isTagList(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((tag) => typeof tag === 'string');
+}
+
+// `tags` is optional so files exported before tags were added still import.
+function isImportPlot(value: unknown): value is Omit<DataExport['plots'][number], 'tags'> & { tags?: string[] } {
   if (typeof value !== 'object' || value === null) return false;
   const v = value as Record<string, unknown>;
   return (
@@ -38,7 +45,8 @@ function isImportPlot(value: unknown): value is DataExport['plots'][number] {
     isNullableString(v.soilType) &&
     isNullableString(v.notes) &&
     isNullableNumber(v.latitude) &&
-    isNullableNumber(v.longitude)
+    isNullableNumber(v.longitude) &&
+    (v.tags === undefined || isTagList(v.tags))
   );
 }
 
@@ -53,6 +61,26 @@ function isImportActivity(value: unknown): value is DataExport['activities'][num
     v.date.trim().length > 0 &&
     isNullableString(v.notes)
   );
+}
+
+// Settings are optional and best-effort: unknown or invalid values are
+// dropped rather than failing the whole import.
+function parseSettings(value: unknown): ExportedSettings | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'object' || value === null) throw new ImportParseError('badShape');
+  const { themePreference, languagePreference } = value as Record<string, unknown>;
+
+  const settings: ExportedSettings = {};
+  if (themePreference === 'system' || themePreference === 'light' || themePreference === 'dark') {
+    settings.themePreference = themePreference;
+  }
+  if (
+    typeof languagePreference === 'string' &&
+    (languagePreference === 'system' || supportedLanguages.includes(languagePreference))
+  ) {
+    settings.languagePreference = languagePreference;
+  }
+  return Object.keys(settings).length > 0 ? settings : undefined;
 }
 
 // Parses and structurally validates a pasted export payload without writing
@@ -74,8 +102,14 @@ export function parseDataExport(raw: string): DataExport {
     throw new ImportParseError('badActivities');
   }
 
+  const settings = parseSettings((json as { settings?: unknown }).settings);
   const exportedAt = (json as { exportedAt?: unknown }).exportedAt;
-  return { exportedAt: typeof exportedAt === 'string' ? exportedAt : '', plots, activities };
+  return {
+    exportedAt: typeof exportedAt === 'string' ? exportedAt : '',
+    plots: plots.map((plot) => ({ ...plot, tags: plot.tags ?? [] })),
+    activities,
+    ...(settings ? { settings } : {}),
+  };
 }
 
 export interface ImportResult {
@@ -83,6 +117,9 @@ export interface ImportResult {
   activitiesImported: number;
 }
 
+// Settings are not applied here — the caller owns the theme/language state
+// and applies `data.settings` itself.
+//
 // Every plot/activity is inserted as a brand-new record — imported ids are
 // only used to relink each activity to the newly created plot it belonged
 // to, never to overwrite or merge with an existing plot.
@@ -100,6 +137,7 @@ export async function importDataExport(data: DataExport): Promise<ImportResult> 
       soilType: plot.soilType,
       notes: plot.notes,
     });
+    if (plot.tags.length > 0) await setPlotTags(created.id, plot.tags);
     idMap.set(plot.id, created.id);
   }
 

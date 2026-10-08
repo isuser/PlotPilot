@@ -94,7 +94,8 @@
       "en": "Inglês",
       "pt-PT": "Português"
     },
-    "data": "Dados",
+    "export": "Exportar",
+    "import": "Importar",
     "exportData": "Exportar dados",
     "exporting": "A exportar…",
     "exportErrorTitle": "Falha na exportação",
@@ -108,6 +109,7 @@
     "importActivitiesCount_other": "{{count}} atividades",
     "importConfirmTitle": "Importar dados?",
     "importConfirmMessage": "{{plotsLabel}} e {{activitiesLabel}} serão importadas como novos registos.",
+    "importConfirmSettings": "As definições da aplicação (tema e idioma) também serão substituídas.",
     "importConfirmButton": "Importar",
     "importSuccessTitle": "Importação concluída",
     "importSuccessMessage": "Importadas {{plotsLabel}} e {{activitiesLabel}}.",
@@ -128,5 +130,15 @@
     "notesPlaceholder": "Notas opcionais",
     "save": "Guardar",
     "done": "Concluído"
+  },
+  "export": {
+    "title": "Exportar dados",
+    "selectAll": "Selecionar tudo",
+    "selectedCount": "{{count}} de {{total}}",
+    "noPlots": "Ainda não tem parcelas para exportar.",
+    "includeSettings": "Incluir definições da aplicação",
+    "includeSettingsHint": "Tema e idioma",
+    "exportButton_one": "Exportar {{count}} parcela",
+    "exportButton_other": "Exportar {{count}} parcelas"
   }
 }

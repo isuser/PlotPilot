@@ -21,6 +21,25 @@ export async function listTagsForPlot(plotId: number): Promise<string[]> {
   return rows.map((row) => row.name);
 }
 
+// Tag names for every plot in one query, keyed by plot id. Plots without
+// tags are simply absent from the map.
+export async function listTagsByPlot(): Promise<Map<number, string[]>> {
+  const db = await getDatabase();
+  const rows = await db.getAllAsync<{ plot_id: number; name: string }>(
+    `SELECT plot_tags.plot_id AS plot_id, tags.name AS name
+     FROM plot_tags
+     JOIN tags ON tags.id = plot_tags.tag_id
+     ORDER BY tags.name COLLATE NOCASE ASC`,
+  );
+  const byPlot = new Map<number, string[]>();
+  for (const row of rows) {
+    const names = byPlot.get(row.plot_id);
+    if (names) names.push(row.name);
+    else byPlot.set(row.plot_id, [row.name]);
+  }
+  return byPlot;
+}
+
 async function getOrCreateTagId(db: SQLiteDatabase, name: string): Promise<number> {
   const existing = await db.getFirstAsync<{ id: number }>('SELECT id FROM tags WHERE name = ?', name);
   if (existing) return existing.id;
