@@ -11,14 +11,18 @@
     "selectPlot": "Qual parcela?",
     "recentActivity": "Atividade recente",
     "viewAll": "Ver tudo",
-    "searchPlaceholder": "Pesquisar parcelas por nome",
+    "searchPlaceholder": "Pesquisar parcelas por nome ou etiqueta",
     "allCrops": "Todas",
     "searchResults": "Resultados da pesquisa",
     "noResults": "Nenhuma parcela corresponde à pesquisa",
     "plots": "Parcelas",
     "prev": "‹ Anterior",
     "next": "Seguinte ›",
-    "pageIndicator": "{{page}} de {{total}}"
+    "pageIndicator": "{{page}} de {{total}}",
+    "tags": "Etiquetas",
+    "tagsSelected_one": "Etiquetas · {{count}} selecionada",
+    "tagsSelected_other": "Etiquetas · {{count}} selecionadas",
+    "clearTags": "Limpar"
   },
   "map": {
     "title": "Mapa",

@@ -6,6 +6,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { listAllActivities } from '../db/activities';
 import { listPlots } from '../db/plots';
+import { listTagsByPlot } from '../db/tags';
 import type { ActivityWithPlot, Plot } from '../db/types';
 import type { RootStackParamList } from '../navigation/types';
 import { DEFAULT_PLOT_COLOR } from '../map/plotColors';
@@ -15,7 +16,25 @@ import type { ThemeColors } from '../theme/colors';
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 const RECENT_ACTIVITY_LIMIT = 5;
+const MAX_TAG_PILLS = 3;
 const PLOTS_PER_PAGE = 5;
+
+function TagPills({ tags, styles }: { tags: string[]; styles: ReturnType<typeof createStyles> }) {
+  if (tags.length === 0) return null;
+  const hidden = tags.length - MAX_TAG_PILLS;
+  return (
+    <View style={styles.tagPills}>
+      {tags.slice(0, MAX_TAG_PILLS).map((tag) => (
+        <View key={tag} style={styles.tagPill}>
+          <Text style={styles.tagPillText} numberOfLines={1}>
+            {tag}
+          </Text>
+        </View>
+      ))}
+      {hidden > 0 ? <Text style={styles.tagPillMore}>+{hidden}</Text> : null}
+    </View>
+  );
+}
 
 export default function HomeScreen({ navigation }: Props) {
   const { t } = useTranslation();
@@ -26,6 +45,9 @@ export default function HomeScreen({ navigation }: Props) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [cropFilter, setCropFilter] = useState<string | null>(null);
+  const [tagsByPlot, setTagsByPlot] = useState<Map<number, string[]>>(new Map());
+  const [tagFilters, setTagFilters] = useState<string[]>([]);
+  const [tagMenuOpen, setTagMenuOpen] = useState(false);
   const [plotsPage, setPlotsPage] = useState(0);
 
   useFocusEffect(
@@ -33,6 +55,9 @@ export default function HomeScreen({ navigation }: Props) {
       let cancelled = false;
       listPlots().then((rows) => {
         if (!cancelled) setPlots(rows);
+      });
+      listTagsByPlot().then((byPlot) => {
+        if (!cancelled) setTagsByPlot(byPlot);
       });
       listAllActivities().then((rows) => {
         if (!cancelled) setRecentActivities(rows.slice(0, RECENT_ACTIVITY_LIMIT));
@@ -53,17 +78,43 @@ export default function HomeScreen({ navigation }: Props) {
     return Array.from(crops).sort((a, b) => a.localeCompare(b));
   }, [plots]);
 
-  const isSearching = query.trim().length > 0 || cropFilter !== null;
+  const distinctTags = useMemo(() => {
+    const tags = new Set<string>();
+    for (const plotTags of tagsByPlot.values()) {
+      for (const tag of plotTags) tags.add(tag);
+    }
+    return Array.from(tags).sort((a, b) => a.localeCompare(b));
+  }, [tagsByPlot]);
 
+  // Ignore selected tags that no longer exist on any plot (e.g. removed
+  // from their last plot while this screen was in the background).
+  const activeTagFilters = useMemo(
+    () => tagFilters.filter((tag) => distinctTags.includes(tag)),
+    [tagFilters, distinctTags],
+  );
+
+  const toggleTagFilter = (tag: string) => {
+    setTagFilters((current) => (current.includes(tag) ? current.filter((existing) => existing !== tag) : [...current, tag]));
+  };
+
+  const isSearching = query.trim().length > 0 || cropFilter !== null || activeTagFilters.length > 0;
+
+  // The text query matches a plot's name or any of its tags. Crop and tag
+  // filters narrow further: a plot must carry every selected tag.
   const filteredPlots = useMemo(() => {
     if (!isSearching) return [];
     const normalizedQuery = query.trim().toLowerCase();
     return plots.filter((plot) => {
-      const matchesQuery = normalizedQuery.length === 0 || plot.name.toLowerCase().includes(normalizedQuery);
+      const plotTags = tagsByPlot.get(plot.id) ?? [];
+      const matchesQuery =
+        normalizedQuery.length === 0 ||
+        plot.name.toLowerCase().includes(normalizedQuery) ||
+        plotTags.some((tag) => tag.toLowerCase().includes(normalizedQuery));
       const matchesCrop = cropFilter === null || plot.crop === cropFilter;
-      return matchesQuery && matchesCrop;
+      const matchesTags = activeTagFilters.every((tag) => plotTags.includes(tag));
+      return matchesQuery && matchesCrop && matchesTags;
     });
-  }, [plots, query, cropFilter, isSearching]);
+  }, [plots, tagsByPlot, query, cropFilter, activeTagFilters, isSearching]);
 
   const plotsPageCount = Math.max(1, Math.ceil(plots.length / PLOTS_PER_PAGE));
   const clampedPlotsPage = Math.min(plotsPage, plotsPageCount - 1);
@@ -131,6 +182,42 @@ export default function HomeScreen({ navigation }: Props) {
             </View>
           ) : null}
 
+          {distinctTags.length > 0 ? (
+            <Pressable
+              style={[styles.tagMenuToggle, activeTagFilters.length > 0 && styles.chipSelected]}
+              onPress={() => setTagMenuOpen((open) => !open)}
+            >
+              <Text style={[styles.chipText, activeTagFilters.length > 0 && styles.chipTextSelected]}>
+                {activeTagFilters.length > 0
+                  ? t('home.tagsSelected', { count: activeTagFilters.length })
+                  : t('home.tags')}{' '}
+                {tagMenuOpen ? '▴' : '▾'}
+              </Text>
+            </Pressable>
+          ) : null}
+
+          {distinctTags.length > 0 && tagMenuOpen ? (
+            <View style={styles.tagMenu}>
+              {distinctTags.map((tag) => {
+                const selected = activeTagFilters.includes(tag);
+                return (
+                  <Pressable
+                    key={tag}
+                    style={[styles.chip, selected && styles.chipSelected]}
+                    onPress={() => toggleTagFilter(tag)}
+                  >
+                    <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{tag}</Text>
+                  </Pressable>
+                );
+              })}
+              {activeTagFilters.length > 0 ? (
+                <Pressable style={styles.tagMenuClear} onPress={() => setTagFilters([])}>
+                  <Text style={styles.tagMenuClearText}>{t('home.clearTags')}</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          ) : null}
+
           {!isSearching ? (
             <>
               <Pressable style={styles.summaryCard} onPress={() => navigation.navigate('Map')}>
@@ -189,6 +276,7 @@ export default function HomeScreen({ navigation }: Props) {
                       <View style={styles.activityRowContent}>
                         <Text style={styles.plotName}>{plot.name}</Text>
                         {plot.crop ? <Text style={styles.activityType}>{plot.crop}</Text> : null}
+                        <TagPills tags={tagsByPlot.get(plot.id) ?? []} styles={styles} />
                       </View>
                     </Pressable>
                   ))}
@@ -270,6 +358,7 @@ export default function HomeScreen({ navigation }: Props) {
             <View style={styles.activityRowContent}>
               <Text style={styles.plotName}>{item.name}</Text>
               {item.crop ? <Text style={styles.activityType}>{item.crop}</Text> : null}
+              <TagPills tags={tagsByPlot.get(item.id) ?? []} styles={styles} />
             </View>
           </Pressable>
         )
@@ -387,5 +476,36 @@ function createStyles(colors: ThemeColors) {
     plotName: { fontSize: 16, fontWeight: '600', flexShrink: 1, color: colors.textPrimary },
     date: { fontSize: 13, color: colors.textSecondary, marginLeft: 8 },
     activityType: { fontSize: 14, color: colors.accentText, fontWeight: '600', marginTop: 2 },
+    tagMenuToggle: {
+      alignSelf: 'flex-start',
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 16,
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+      marginBottom: 12,
+    },
+    tagMenu: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      gap: 8,
+      padding: 10,
+      marginBottom: 12,
+      borderRadius: 8,
+      backgroundColor: colors.surface,
+    },
+    tagMenuClear: { paddingVertical: 6, paddingHorizontal: 4 },
+    tagMenuClearText: { fontSize: 13, color: colors.accentText, fontWeight: '600' },
+    tagPills: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+    tagPill: {
+      backgroundColor: colors.border,
+      borderRadius: 4,
+      paddingVertical: 1,
+      paddingHorizontal: 6,
+      maxWidth: 110,
+    },
+    tagPillText: { fontSize: 11, color: colors.textPrimary },
+    tagPillMore: { fontSize: 11, color: colors.textSecondary },
   });
 }
