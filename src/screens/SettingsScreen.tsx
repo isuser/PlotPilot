@@ -1,11 +1,14 @@
 import type { ReactNode } from 'react';
 import { useMemo, useState } from 'react';
-import { Alert, Pressable, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { buildDataExport, type DataExport } from '../db/export';
+import type { DataExport } from '../db/export';
 import { ImportParseError, importDataExport, parseDataExport } from '../db/import';
 import { getLanguagePreference, setLanguagePreference, supportedLanguages, type LanguagePreference } from '../i18n';
+import type { RootStackParamList } from '../navigation/types';
 import { useTheme, type ThemePreference } from '../theme/ThemeContext';
 import type { ThemeColors } from '../theme/colors';
 
@@ -31,32 +34,34 @@ const IMPORT_ERROR_KEYS: Record<ImportParseError['code'], string> = {
   badActivities: 'settings.importErrorBadActivities',
 };
 
-function DataSection({ styles }: { styles: ReturnType<typeof createStyles> }) {
+function ExportSection({ styles }: { styles: ReturnType<typeof createStyles> }) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
-  const [exporting, setExporting] = useState(false);
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  return (
+    <Pressable style={styles.actionRow} onPress={() => navigation.navigate('Export')}>
+      <Text style={styles.actionRowText}>{t('settings.exportData')}</Text>
+    </Pressable>
+  );
+}
+
+interface ImportSectionProps {
+  styles: ReturnType<typeof createStyles>;
+  onLanguageChange: (preference: LanguagePreference) => void;
+}
+
+function ImportSection({ styles, onLanguageChange }: ImportSectionProps) {
+  const { t } = useTranslation();
+  const { colors, setPreference: setThemePreference } = useTheme();
   const [importText, setImportText] = useState('');
   const [importing, setImporting] = useState(false);
-
-  const handleExport = async () => {
-    setExporting(true);
-    try {
-      const data = await buildDataExport();
-      await Share.share({
-        title: t('settings.exportData'),
-        message: JSON.stringify(data, null, 2),
-      });
-    } catch {
-      Alert.alert(t('settings.exportErrorTitle'), t('settings.exportErrorMessage'));
-    } finally {
-      setExporting(false);
-    }
-  };
 
   const runImport = async (parsed: DataExport) => {
     setImporting(true);
     try {
       const result = await importDataExport(parsed);
+      if (parsed.settings?.themePreference) setThemePreference(parsed.settings.themePreference);
+      if (parsed.settings?.languagePreference) onLanguageChange(parsed.settings.languagePreference);
       setImportText('');
       Alert.alert(
         t('settings.importSuccessTitle'),
@@ -82,12 +87,13 @@ function DataSection({ styles }: { styles: ReturnType<typeof createStyles> }) {
       return;
     }
 
+    const summary = t('settings.importConfirmMessage', {
+      plotsLabel: t('settings.importPlotsCount', { count: parsed.plots.length }),
+      activitiesLabel: t('settings.importActivitiesCount', { count: parsed.activities.length }),
+    });
     Alert.alert(
       t('settings.importConfirmTitle'),
-      t('settings.importConfirmMessage', {
-        plotsLabel: t('settings.importPlotsCount', { count: parsed.plots.length }),
-        activitiesLabel: t('settings.importActivitiesCount', { count: parsed.activities.length }),
-      }),
+      parsed.settings ? `${summary}\n\n${t('settings.importConfirmSettings')}` : summary,
       [
         { text: t('plotDetail.cancel'), style: 'cancel' },
         { text: t('settings.importConfirmButton'), onPress: () => runImport(parsed) },
@@ -98,12 +104,7 @@ function DataSection({ styles }: { styles: ReturnType<typeof createStyles> }) {
   const canImport = importText.trim().length > 0 && !importing;
 
   return (
-    <View style={styles.dataActions}>
-      <Pressable style={styles.actionRow} onPress={handleExport} disabled={exporting}>
-        <Text style={styles.actionRowText}>
-          {exporting ? t('settings.exporting') : t('settings.exportData')}
-        </Text>
-      </Pressable>
+    <View style={styles.importActions}>
       <TextInput
         style={styles.importInput}
         value={importText}
@@ -170,20 +171,20 @@ function AppearanceSection({ styles }: { styles: ReturnType<typeof createStyles>
 
 const LANGUAGE_OPTIONS: LanguagePreference[] = ['system', ...supportedLanguages];
 
-function LanguageSection({ styles }: { styles: ReturnType<typeof createStyles> }) {
-  const { t } = useTranslation();
-  const [preference, setPreferenceState] = useState<LanguagePreference>(() => getLanguagePreference());
+interface LanguageSectionProps {
+  styles: ReturnType<typeof createStyles>;
+  preference: LanguagePreference;
+  onChange: (preference: LanguagePreference) => void;
+}
 
-  const handleChange = (option: LanguagePreference) => {
-    setLanguagePreference(option);
-    setPreferenceState(option);
-  };
+function LanguageSection({ styles, preference, onChange }: LanguageSectionProps) {
+  const { t } = useTranslation();
 
   return (
     <SegmentedControl
       options={LANGUAGE_OPTIONS}
       value={preference}
-      onChange={handleChange}
+      onChange={onChange}
       labelFor={(option) => t(`settings.languageNames.${option}`)}
       styles={styles}
     />
@@ -194,6 +195,16 @@ export default function SettingsScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  // Lives here (not in LanguageSection) so an import that carries settings
+  // can update the selected language too.
+  const [languagePreference, setLanguagePreferenceState] = useState<LanguagePreference>(() =>
+    getLanguagePreference(),
+  );
+
+  const handleLanguageChange = (option: LanguagePreference) => {
+    setLanguagePreference(option);
+    setLanguagePreferenceState(option);
+  };
 
   return (
     <View style={styles.container}>
@@ -201,10 +212,13 @@ export default function SettingsScreen() {
         <AppearanceSection styles={styles} />
       </SettingsSection>
       <SettingsSection title={t('settings.language')} styles={styles}>
-        <LanguageSection styles={styles} />
+        <LanguageSection styles={styles} preference={languagePreference} onChange={handleLanguageChange} />
       </SettingsSection>
-      <SettingsSection title={t('settings.data')} styles={styles}>
-        <DataSection styles={styles} />
+      <SettingsSection title={t('settings.export')} styles={styles}>
+        <ExportSection styles={styles} />
+      </SettingsSection>
+      <SettingsSection title={t('settings.import')} styles={styles}>
+        <ImportSection styles={styles} onLanguageChange={handleLanguageChange} />
       </SettingsSection>
     </View>
   );
@@ -227,7 +241,7 @@ function createStyles(colors: ThemeColors) {
       paddingVertical: 14,
       paddingHorizontal: 12,
     },
-    dataActions: { gap: 12 },
+    importActions: { gap: 12 },
     actionRow: {},
     actionRowText: { fontSize: 15, color: colors.accentText, fontWeight: '600' },
     actionRowTextDisabled: { opacity: 0.4 },

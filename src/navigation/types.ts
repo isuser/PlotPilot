@@ -6,4 +6,5 @@ export type RootStackParamList = {
   ActivityForm: { plotId: number; activityId?: number };
   Timeline: undefined;
   Settings: undefined;
+  Export: undefined;
 };

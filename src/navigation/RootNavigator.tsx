@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import ActivityFormScreen from '../screens/ActivityFormScreen';
+import ExportScreen from '../screens/ExportScreen';
 import HomeScreen from '../screens/HomeScreen';
 import MapScreen from '../screens/MapScreen';
 import PlotDetailScreen from '../screens/PlotDetailScreen';
@@ -57,6 +58,7 @@ export default function RootNavigator() {
       <Stack.Screen name="ActivityForm" component={ActivityFormScreen} />
       <Stack.Screen name="Timeline" component={TimelineScreen} options={{ title: t('timeline.title') }} />
       <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: t('settings.title') }} />
+      <Stack.Screen name="Export" component={ExportScreen} options={{ title: t('export.title') }} />
     </Stack.Navigator>
   );
 }

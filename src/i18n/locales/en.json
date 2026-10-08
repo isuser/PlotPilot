@@ -94,7 +94,8 @@
       "en": "English",
       "pt-PT": "Português"
     },
-    "data": "Data",
+    "export": "Export",
+    "import": "Import",
     "exportData": "Export data",
     "exporting": "Exporting…",
     "exportErrorTitle": "Export failed",
@@ -108,6 +109,7 @@
     "importActivitiesCount_other": "{{count}} activities",
     "importConfirmTitle": "Import data?",
     "importConfirmMessage": "{{plotsLabel}} and {{activitiesLabel}} will be imported as new records.",
+    "importConfirmSettings": "Your app settings (theme and language) will also be replaced.",
     "importConfirmButton": "Import",
     "importSuccessTitle": "Import complete",
     "importSuccessMessage": "Imported {{plotsLabel}} and {{activitiesLabel}}.",
@@ -128,5 +130,15 @@
     "notesPlaceholder": "Optional notes",
     "save": "Save",
     "done": "Done"
+  },
+  "export": {
+    "title": "Export data",
+    "selectAll": "Select all",
+    "selectedCount": "{{count}} of {{total}}",
+    "noPlots": "You don't have any plots to export yet.",
+    "includeSettings": "Include app settings",
+    "includeSettingsHint": "Theme and language",
+    "exportButton_one": "Export {{count}} plot",
+    "exportButton_other": "Export {{count}} plots"
   }
 }
