@@ -128,7 +128,17 @@
     "importErrorBadShape": "That JSON doesn't match PlotPilot's export format.",
     "importErrorBadPlots": "One or more plots in that file are missing required fields.",
     "importErrorBadActivities": "One or more activities in that file are missing required fields.",
-    "importErrorGeneric": "Something went wrong while importing your data. Please try again."
+    "importErrorGeneric": "Something went wrong while importing your data. Please try again.",
+    "importKml": "Import plots from KML file",
+    "importKmlHint": "Polygons from Google Earth or other mapping apps",
+    "kmlConfirmMessage": "{{plotsLabel}} found. They'll be imported as new plots; crop, soil type and notes will be left empty.",
+    "kmlSkipped_one": "{{count}} placemark without a polygon will be skipped.",
+    "kmlSkipped_other": "{{count}} placemarks without a polygon will be skipped.",
+    "kmlSuccessMessage": "Imported {{plotsLabel}}.",
+    "kmlDefaultPlotName": "Imported plot {{index}}",
+    "kmlErrorNotXml": "That file couldn't be read. Pick a .kml file (zipped .kmz files aren't supported).",
+    "kmlErrorNotKml": "That file isn't a KML file.",
+    "kmlErrorNoPolygons": "No plot boundaries found. The file needs at least one placemark with a polygon."
   },
   "activityForm": {
     "newTitle": "New activity",
